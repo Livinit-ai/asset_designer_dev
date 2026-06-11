@@ -191,6 +191,15 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
 .bar-sw:hover .bar-sw-img{border-color:var(--border-strong);transform:scale(1.06)}
 .bar-sw.active .bar-sw-img{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .bar-sw-name{font-size:8.5px;color:var(--text-muted);text-align:center;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2}
+.bar-sw-series{font-size:7.5px;color:var(--text-muted);opacity:.65;text-align:center;max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.1;margin-top:1px;font-style:italic}
+
+/* ── Fabric search ─────────────────────────────────────────────────────── */
+.fab-search-wrap{display:flex;align-items:center;gap:5px;margin-left:auto;padding:0 4px;flex-shrink:0;position:relative}
+.fab-search-ico{color:var(--text-muted);flex-shrink:0;pointer-events:none}
+.fab-search-input{height:24px;border:1px solid var(--border);border-radius:20px;background:var(--bg);padding:0 10px 0 6px;font-size:10px;font-family:var(--font-b);color:var(--text);outline:none;width:130px;transition:border-color .15s,width .2s}
+.fab-search-input:focus{border-color:var(--accent);width:170px}
+.fab-search-input::placeholder{color:var(--text-muted)}
+.bar-sw.hidden{display:none!important}
 
 /* ── Drag Ghost ────────────────────────────────────────────────────────── */
 #drag-ghost{position:fixed;width:48px;height:48px;border-radius:6px;border:2px solid var(--accent);box-shadow:0 4px 20px rgba(0,0,0,.25);pointer-events:none;z-index:9999;display:none;overflow:hidden;transform:translate(-50%,-50%)}
@@ -653,7 +662,13 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
 
     <!-- ── FABRIC BAR ────────────────────────────────────────────────── -->
     <div class="fabric-bar">
-      <div class="fabric-tabs-strip" id="fabric-tabs"></div>
+      <div class="fabric-tabs-strip" id="fabric-tabs">
+        <!-- tabs injected by buildLibrary() -->
+        <div class="fab-search-wrap">
+          <svg class="fab-search-ico" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="fab-search-input" class="fab-search-input" placeholder="Search fabrics…" oninput="filterFabricSearch(this.value)">
+        </div>
+      </div>
       <div class="fabric-swatches-row" id="fabric-swatches-row"></div>
     </div>
 
@@ -2184,17 +2199,49 @@ function buildLibrary() {
   const tabsEl = document.getElementById('fabric-tabs');
   const swatchesEl = document.getElementById('fabric-swatches-row');
   if(!tabsEl || !swatchesEl) return;
-  tabsEl.innerHTML = '';
+
+  // Clear only tabs (not the search widget which is static in HTML)
+  tabsEl.querySelectorAll('.fab-tab, .fab-tab-add').forEach(el => el.remove());
   swatchesEl.innerHTML = '';
 
+  // Clear search box
+  const searchInput = document.getElementById('fab-search-input');
+  if(searchInput) searchInput.value = '';
+
   const groups = LIBRARY[currentModelKey];
+
+  // Flatten all items with their group indices (for startDrag compat)
+  const allSwatches = [];
+  groups.forEach((group, gi) => {
+    if(group.items.length === 0) return;
+    const typeKey = group.vclass === 'custom' ? 'custom'
+                  : (group.items[0] && group.items[0].type ? group.items[0].type : 'fabric');
+    group.items.forEach((item, ii) => {
+      const itemType = group.vclass === 'custom' ? 'custom' : (item.type || 'fabric');
+      allSwatches.push({ item, gi, ii, typeKey: itemType, seriesName: group.group });
+    });
+  });
+
+  // Type tab definitions — only show tabs that have items
+  const TYPE_DEFS = [
+    { key: 'all',    label: 'All Fabrics' },
+    { key: 'fabric', label: 'Fabric' },
+    { key: 'vinyl',  label: 'Vinyl' },
+    { key: 'pu',     label: 'PU / Leather' },
+    { key: 'wood',   label: 'Wood' },
+    { key: 'custom', label: 'My Fabrics' },
+  ];
+  const presentTypes = new Set(allSwatches.map(s => s.typeKey));
+
+  // Active type state
+  window._fabActiveType = 'all';
+
   window._fabFilterTab = function(key) {
-    tabsEl.querySelectorAll('.fab-tab[data-tk]').forEach(t => {
-      t.classList.toggle('active', t.dataset.tk === key);
-    });
-    swatchesEl.querySelectorAll('.bar-sw').forEach(sw => {
-      sw.style.display = (key === 'all' || sw.dataset.group === key) ? '' : 'none';
-    });
+    window._fabActiveType = key;
+    tabsEl.querySelectorAll('.fab-tab[data-tk]').forEach(t =>
+      t.classList.toggle('active', t.dataset.tk === key));
+    const q = (document.getElementById('fab-search-input') || {}).value || '';
+    _applyFabricFilters(key, q);
   };
 
   function mkTab(label, key) {
@@ -2206,71 +2253,97 @@ function buildLibrary() {
     return btn;
   }
 
-  tabsEl.appendChild(mkTab('All Fabrics', 'all'));
-
-  groups.forEach((group, gi) => {
-    if(group.vclass === 'custom' && group.items.length === 0) return;
-    if(group.items.length === 0) return;
-    tabsEl.appendChild(mkTab(group.group, group.group));
-
-    group.items.forEach((item, ii) => {
-      const sw = document.createElement('div');
-      sw.className = 'bar-sw';
-      sw.dataset.group = group.group;
-      sw.title = item.name;
-
-      const imgWrap = document.createElement('div');
-      imgWrap.className = 'bar-sw-img';
-      if(item.img) {
-        const img = document.createElement('img');
-        img.src = item.img; img.alt = item.name; img.loading = 'lazy'; img.crossOrigin = 'anonymous';
-        img.onerror = () => { img.remove(); imgWrap.style.background = item.hex||'#ccc'; };
-        imgWrap.appendChild(img);
-      } else if(item.code) {
-        const img = document.createElement('img');
-        img.src = MITY_IMG+item.code+'.jpg'; img.alt = item.name; img.loading = 'lazy'; img.crossOrigin = 'anonymous';
-        img.onerror = () => { img.remove(); imgWrap.style.background = item.hex||'#ccc'; };
-        imgWrap.appendChild(img);
-      } else {
-        imgWrap.style.background = item.hex||'#ccc';
-      }
-
-      const nameEl = document.createElement('div');
-      nameEl.className = 'bar-sw-name';
-      nameEl.textContent = item.name;
-
-      sw.appendChild(imgWrap);
-      sw.appendChild(nameEl);
-
-      sw.addEventListener('click', () => {
-        if(roomMode) {
-          const selected = meshEntries.filter(e => e.pieceSelected);
-          if(!selected.length) { showToast('Click a piece in the list →'); return; }
-          if(activeBtnEl) activeBtnEl.classList.remove('active');
-          activeBtnEl = sw; sw.classList.add('active');
-          applySwatchToEntries(item, selected);
-        } else {
-          const checked = meshEntries.filter(e => e.checked);
-          if(!checked.length) { showToast('Select a zone first →'); return; }
-          if(activeBtnEl) activeBtnEl.classList.remove('active');
-          activeBtnEl = sw; sw.classList.add('active');
-          lastAppliedItem = item;
-          applySwatchToEntries(item, checked);
-        }
-      });
-
-      sw.addEventListener('mousedown', e => { e.preventDefault(); startDrag(e, gi, ii); });
-      swatchesEl.appendChild(sw);
-    });
+  // Insert tabs before the search widget
+  const searchWrap = tabsEl.querySelector('.fab-search-wrap');
+  TYPE_DEFS.forEach(({ key, label }) => {
+    if (key === 'all' || presentTypes.has(key)) {
+      tabsEl.insertBefore(mkTab(label, key), searchWrap);
+    }
   });
 
+  // Add Fabric button (before search wrap)
   const addBtn = document.createElement('button');
   addBtn.className = 'fab-tab-add';
   addBtn.textContent = '+ Add Fabric';
   addBtn.onclick = openFabricFinder;
-  tabsEl.appendChild(addBtn);
+  tabsEl.insertBefore(addBtn, searchWrap);
+
+  // Build all swatches
+  allSwatches.forEach(({ item, gi, ii, typeKey, seriesName }) => {
+    const sw = document.createElement('div');
+    sw.className = 'bar-sw';
+    sw.dataset.type = typeKey;
+    sw.dataset.series = seriesName.toLowerCase();
+    sw.dataset.name = item.name.toLowerCase();
+    sw.title = item.name + ' · ' + seriesName;
+
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'bar-sw-img';
+    if (item.img) {
+      const img = document.createElement('img');
+      img.src = item.img; img.alt = item.name; img.loading = 'lazy'; img.crossOrigin = 'anonymous';
+      img.onerror = () => { img.remove(); imgWrap.style.background = item.hex || '#ccc'; };
+      imgWrap.appendChild(img);
+    } else if (item.code) {
+      const img = document.createElement('img');
+      img.src = MITY_IMG + item.code + '.jpg'; img.alt = item.name; img.loading = 'lazy'; img.crossOrigin = 'anonymous';
+      img.onerror = () => { img.remove(); imgWrap.style.background = item.hex || '#ccc'; };
+      imgWrap.appendChild(img);
+    } else {
+      imgWrap.style.background = item.hex || '#ccc';
+    }
+
+    // Strip series prefix from name so label is shorter ("Bark" not "Abilene Bark")
+    const shortName = item.name.startsWith(seriesName + ' ')
+      ? item.name.slice(seriesName.length + 1) : item.name;
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'bar-sw-name';
+    nameEl.textContent = shortName;
+
+    const seriesEl = document.createElement('div');
+    seriesEl.className = 'bar-sw-series';
+    seriesEl.textContent = seriesName;
+
+    sw.appendChild(imgWrap);
+    sw.appendChild(nameEl);
+    sw.appendChild(seriesEl);
+
+    sw.addEventListener('click', () => {
+      if (roomMode) {
+        const selected = meshEntries.filter(e => e.pieceSelected);
+        if (!selected.length) { showToast('Click a piece in the list →'); return; }
+        if (activeBtnEl) activeBtnEl.classList.remove('active');
+        activeBtnEl = sw; sw.classList.add('active');
+        applySwatchToEntries(item, selected);
+      } else {
+        const checked = meshEntries.filter(e => e.checked);
+        if (!checked.length) { showToast('Select a zone first →'); return; }
+        if (activeBtnEl) activeBtnEl.classList.remove('active');
+        activeBtnEl = sw; sw.classList.add('active');
+        lastAppliedItem = item;
+        applySwatchToEntries(item, checked);
+      }
+    });
+
+    sw.addEventListener('mousedown', e => { e.preventDefault(); startDrag(e, gi, ii); });
+    swatchesEl.appendChild(sw);
+  });
 
   _updateZoneCountBadge();
+}
+
+function _applyFabricFilters(typeKey, query) {
+  const q = query.trim().toLowerCase();
+  document.querySelectorAll('#fabric-swatches-row .bar-sw').forEach(sw => {
+    const typeMatch = (typeKey === 'all' || sw.dataset.type === typeKey);
+    const textMatch = !q || sw.dataset.name.includes(q) || sw.dataset.series.includes(q);
+    sw.classList.toggle('hidden', !(typeMatch && textMatch));
+  });
+}
+
+function filterFabricSearch(value) {
+  _applyFabricFilters(window._fabActiveType || 'all', value);
 }
 
 // ── Room View ─────────────────────────────────────────────────────────────
