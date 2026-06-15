@@ -149,7 +149,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .m-btn{flex:1;padding:5px 0;font-size:10px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--border);background:transparent;color:var(--text-muted);border-radius:var(--r);cursor:pointer;transition:all .15s}
 .m-btn:hover{border-color:var(--border-strong);color:var(--text)}
 .app-prev{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--bg);border-radius:var(--r);border:1px solid var(--border)}
-.app-sw{width:34px;height:34px;border-radius:3px;background:var(--border);flex-shrink:0;overflow:hidden}
+.app-sw{width:38px;height:38px;border-radius:5px;background:var(--border);flex-shrink:0;overflow:hidden}
 .app-sw img{width:100%;height:100%;object-fit:cover}
 .app-name{font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .app-vend{font-size:10px;color:var(--text-muted);margin-top:1px}
@@ -164,31 +164,51 @@ input[type=range]{width:100%;appearance:none;height:3px;background:var(--border)
 input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--accent)}
 .room-controls{padding:14px 16px;border-bottom:1px solid var(--border)}
 .room-controls .r-sec-t{margin-bottom:8px}
-.room-row{display:flex;gap:6px;margin-bottom:8px}
-.room-chip{flex:1;padding:6px 0;font-size:10px;font-weight:500;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--border);background:transparent;color:var(--text-muted);border-radius:var(--r);cursor:pointer;transition:all .15s;text-align:center}
-.room-chip.on{background:var(--accent-pale);border-color:var(--accent);color:var(--accent)}
-.room-chip:hover:not(.on){border-color:var(--border-strong);color:var(--text)}
-.piece-item{display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--r);cursor:pointer;border:1px solid transparent;transition:all .15s;font-size:12px;color:var(--text-mid)}
-.piece-item:hover{background:var(--bg);border-color:var(--border)}
-.piece-item.sel-piece{background:var(--accent-pale);border-color:var(--accent);color:var(--text)}
 .piece-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
 
 /* ── Room Section Tabs ─────────────────────────────────────────────────── */
-.room-sec-strip{display:flex;gap:3px;padding:10px 16px 8px;border-bottom:1px solid var(--border);flex-shrink:0}
-.room-sec-btn{flex:1;padding:7px 4px;font-size:11px;font-weight:600;font-family:var(--font-b);border:1.5px solid var(--border);border-radius:7px;background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s;text-align:center}
-.room-sec-btn.active{background:var(--accent-pale);border-color:var(--accent);color:var(--accent)}
-.room-sec-btn:hover:not(.active){border-color:var(--border-strong);color:var(--text);background:var(--bg)}
+.room-sec-strip{display:flex;gap:4px;padding:12px 14px 10px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)}
+.room-sec-btn{flex:1;padding:8px 4px;font-size:11px;font-weight:600;font-family:var(--font-b);border:1.5px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-muted);cursor:pointer;transition:all .18s;text-align:center;line-height:1.3}
+.room-sec-btn.active{background:var(--accent-pale);border-color:var(--accent);color:var(--accent);box-shadow:0 1px 4px rgba(124,58,237,.12)}
+.room-sec-btn:hover:not(.active){border-color:var(--border-strong);color:var(--text);background:var(--surface)}
 .room-sec-content{display:none}
 .room-sec-content.active{display:block}
 
+/* ── Room section inner dividers ───────────────────────────────────────── */
+.room-section-block{padding:14px 16px;border-bottom:1px solid var(--border)}
+.room-section-block:last-child{border-bottom:none}
+.room-section-label{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.room-section-label svg{opacity:.6}
+
+/* ── Room element chips ─────────────────────────────────────────────────── */
+.room-chips-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.room-chip{padding:7px 4px;font-size:9.5px;font-weight:500;letter-spacing:.04em;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);border-radius:7px;cursor:pointer;transition:all .15s;text-align:center;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:42px;justify-content:center}
+.room-chip.on{background:var(--accent-pale);border-color:var(--accent);color:var(--accent);font-weight:600}
+.room-chip:hover:not(.on){border-color:var(--border-strong);color:var(--text);background:var(--bg)}
+.room-chip-ico{font-size:13px;line-height:1}
+
+/* ── Furniture Parts ────────────────────────────────────────────────────── */
+.piece-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.piece-hint{font-size:10px;color:var(--text-muted);line-height:1.5;margin-bottom:10px;display:flex;flex-direction:column;gap:2px}
+.piece-hint-row{display:flex;align-items:center;gap:5px}
+.piece-hint-ico{width:14px;height:14px;border-radius:3px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:8px;color:var(--text-muted)}
+#piece-list{display:flex;flex-direction:column;gap:2px}
+.piece-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .15s;font-size:12px;color:var(--text-mid);min-height:36px}
+.piece-item:hover{background:var(--bg);border-color:var(--border);color:var(--text)}
+.piece-item.sel-piece{background:var(--accent-pale);border-color:var(--accent);color:var(--text)}
+.piece-item-name{flex:1;font-weight:500}
+.piece-item-arrow{opacity:0;transition:opacity .15s;color:var(--accent)}
+.piece-item:hover .piece-item-arrow,.piece-item.sel-piece .piece-item-arrow{opacity:1}
+.piece-dot{width:8px;height:8px;border-radius:3px;flex-shrink:0}
+
 /* ── Furniture Move Mode ───────────────────────────────────────────────── */
-.move-mode-bar{display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--accent-pale);border-bottom:1px solid var(--accent);display:none}
+.move-mode-bar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--accent-pale);border-left:3px solid var(--accent);border-radius:0 6px 6px 0;margin:0 0 10px;display:none}
 .move-mode-bar.active{display:flex}
-.move-mode-label{font-size:11px;font-weight:600;color:var(--accent);flex:1}
-.move-mode-mode-btns{display:flex;gap:3px}
-.move-mode-mode-btn{padding:3px 8px;font-size:9px;font-weight:600;letter-spacing:.05em;border:1.5px solid var(--accent);border-radius:4px;background:transparent;color:var(--accent);cursor:pointer;font-family:var(--font-b);transition:all .15s}
+.move-mode-label{font-size:10px;font-weight:700;color:var(--accent);flex:1;letter-spacing:.02em}
+.move-mode-mode-btns{display:flex;gap:2px}
+.move-mode-mode-btn{padding:3px 7px;font-size:9px;font-weight:600;letter-spacing:.05em;border:1px solid var(--accent);border-radius:4px;background:transparent;color:var(--accent);cursor:pointer;font-family:var(--font-b);transition:all .15s}
 .move-mode-mode-btn.active{background:var(--accent);color:#fff}
-.move-mode-done{padding:4px 10px;font-size:10px;font-weight:600;border:none;border-radius:5px;background:var(--accent);color:#fff;cursor:pointer;font-family:var(--font-b);transition:background .15s}
+.move-mode-done{padding:4px 9px;font-size:10px;font-weight:600;border:none;border-radius:5px;background:var(--accent);color:#fff;cursor:pointer;font-family:var(--font-b);transition:background .15s}
 .move-mode-done:hover{background:var(--accent-hover)}
 .move-btn{display:flex;align-items:center;gap:4px;padding:4px 8px;font-size:9px;font-weight:600;letter-spacing:.05em;border:1px solid var(--border);background:transparent;color:var(--text-muted);border-radius:4px;cursor:pointer;font-family:var(--font-b);transition:all .15s;margin-left:auto}
 .move-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-pale)}
@@ -623,49 +643,69 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
           <!-- Room Section Tabs -->
           <div class="room-sec-strip">
             <button class="room-sec-btn active" id="rsec-living" onclick="setRoomSection('living')">
+              <span style="display:block;font-size:14px;margin-bottom:1px">🛋</span>
               Living Room
             </button>
             <button class="room-sec-btn" id="rsec-bedroom" onclick="setRoomSection('bedroom')">
+              <span style="display:block;font-size:14px;margin-bottom:1px">🛏</span>
               Bedroom
             </button>
           </div>
 
           <!-- Living Room content -->
           <div id="rsec-living-content" class="room-sec-content active">
-            <div class="room-controls">
-              <div class="r-sec-t">Room Elements</div>
-              <div class="room-row">
-                <button class="room-chip on" id="chip-walls" onclick="toggleRoomEl('walls')">Walls</button>
-                <button class="room-chip on" id="chip-floor" onclick="toggleRoomEl('floor')">Floor</button>
-                <button class="room-chip on" id="chip-windows" onclick="toggleRoomEl('windows')">Windows</button>
+
+            <!-- Room Elements block -->
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Room Elements
               </div>
-              <div class="room-row">
-                <button class="room-chip on" id="chip-doors" onclick="toggleRoomEl('doors')">Doors</button>
-                <button class="room-chip on" id="chip-rug" onclick="toggleRoomEl('rug')">Rug</button>
-                <button class="room-chip" id="chip-ceiling" onclick="toggleRoomEl('ceiling')">Ceiling</button>
+              <div class="room-chips-grid">
+                <button class="room-chip on" id="chip-walls" onclick="toggleRoomEl('walls')"><span class="room-chip-ico">🧱</span>Walls</button>
+                <button class="room-chip on" id="chip-floor" onclick="toggleRoomEl('floor')"><span class="room-chip-ico">⬛</span>Floor</button>
+                <button class="room-chip on" id="chip-windows" onclick="toggleRoomEl('windows')"><span class="room-chip-ico">🪟</span>Windows</button>
+                <button class="room-chip on" id="chip-doors" onclick="toggleRoomEl('doors')"><span class="room-chip-ico">🚪</span>Doors</button>
+                <button class="room-chip on" id="chip-rug" onclick="toggleRoomEl('rug')"><span class="room-chip-ico">🟫</span>Rug</button>
+                <button class="room-chip" id="chip-ceiling" onclick="toggleRoomEl('ceiling')"><span class="room-chip-ico">▫</span>Ceiling</button>
               </div>
             </div>
-            <div class="r-sec">
-              <div class="cp-section-hdr">
-                <span class="r-sec-t">Furniture Parts</span>
+
+            <!-- Furniture Parts block -->
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3"/><path d="M2 11a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9H2z"/><path d="M7 20v-5h10v5"/></svg>
+                Furniture Parts
               </div>
               <div id="move-mode-bar" class="move-mode-bar">
-                <span class="move-mode-label">Move Mode — drag to reposition</span>
+                <span class="move-mode-label">Move Mode Active</span>
                 <div class="move-mode-mode-btns">
-                  <button class="move-mode-mode-btn active" id="mm-translate" onclick="setMoveMode('translate')">Translate</button>
+                  <button class="move-mode-mode-btn active" id="mm-translate" onclick="setMoveMode('translate')">Move</button>
                   <button class="move-mode-mode-btn" id="mm-rotate" onclick="setMoveMode('rotate')">Rotate</button>
                 </div>
                 <button class="move-mode-done" onclick="toggleMoveMode()">Done</button>
               </div>
-              <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px;padding:0 0 0 1px">Double-click furniture to move · Click part to select · Drag swatch onto piece</div>
+              <div class="piece-hint">
+                <div class="piece-hint-row">
+                  <div class="piece-hint-ico">✦</div>Double-click furniture to enter move mode
+                </div>
+                <div class="piece-hint-row">
+                  <div class="piece-hint-ico">◎</div>Click a part below, then drag a swatch onto it
+                </div>
+              </div>
               <div id="piece-list"></div>
             </div>
-            <div class="r-sec">
-              <div class="r-sec-t">Applied Material</div>
+
+            <!-- Applied Material block -->
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+                Applied Material
+              </div>
               <div class="app-prev">
-                <div class="app-sw" id="app-sw-room"></div>
+                <div class="app-sw" id="app-sw-room" style="width:40px;height:40px;border-radius:6px"></div>
                 <div style="flex:1;min-width:0">
-                  <div class="app-name" id="app-name-room">— none —</div>
+                  <div class="app-name" id="app-name-room">— none selected —</div>
                   <div class="app-vend" id="app-vend-room"></div>
                 </div>
                 <button class="app-replace-btn" id="app-replace-btn-room" title="Replace with your own image" onclick="openDiffuseUpload()" style="display:none">
@@ -673,8 +713,13 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
                 </button>
               </div>
             </div>
-            <div class="r-sec">
-              <div class="r-sec-t">Material Adjustments</div>
+
+            <!-- Material Adjustments block -->
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                Material Adjustments
+              </div>
               <div class="sl-row">
                 <div class="sl-lbl">Brightness <span class="sl-val" id="v-brightness-r">1.00</span></div>
                 <input type="range" id="s-brightness-r" min="0.01" max="2" step="0.05" value="1" oninput="updateBrightness(+this.value)">
@@ -687,9 +732,10 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
                 <div class="sl-lbl">Pattern Scale <span class="sl-val" id="v-scale-r">10.0</span></div>
                 <input type="range" id="s-scale-r" min="0.5" max="20" step="0.1" value="10" oninput="updateTexScale(+this.value)">
               </div>
-            </div>
-            <div class="cp-footer">
-              <button class="btn-get-quote" onclick="">Get A Quote →</button>
+            </div><!-- /room-section-block material adjustments -->
+
+            <div style="padding:14px 16px 18px">
+              <button class="btn-get-quote" onclick="" style="width:100%">Get A Quote →</button>
             </div>
           </div><!-- /living room content -->
 
@@ -1921,8 +1967,9 @@ function buildPieceList() {
     row.className='piece-item'+(entry.pieceSelected?' sel-piece':'');
     const dotEl=document.createElement('div');
     dotEl.className='piece-dot'; dotEl.style.backgroundColor=dot;
-    const txt=document.createElement('span'); txt.textContent=entry.name;
-    row.appendChild(dotEl); row.appendChild(txt);
+    const txt=document.createElement('span'); txt.className='piece-item-name'; txt.textContent=entry.name;
+    const arrow=document.createElement('span'); arrow.className='piece-item-arrow'; arrow.textContent='›';
+    row.appendChild(dotEl); row.appendChild(txt); row.appendChild(arrow);
     row.addEventListener('click',()=>{
       meshEntries.forEach(e=>{ e.pieceSelected=false; });
       entry.pieceSelected = true;
@@ -2478,10 +2525,10 @@ function toggleRoomView() {
     // Camera will be set inside buildRoom() once room GLB loads
     // and we know the actual floor Y. Pass a callback.
     buildRoom(() => {
-      // Camera looks into the room from slightly outside the front opening,
-      // with the sofa and chair centred in the frame.
-      sph = {theta: -0.5, phi: 0.92, r: 8.5};
-      tgt.set(1.0, -0.3, 0.5);
+      // Same diagonal angle used by the AI render — confirmed to look INTO the room
+      // interior from the open corner. Use r=10 so the full room fits the frame.
+      sph = {theta: -2.32, phi: 1.2, r: 10.0};
+      tgt.set(0, -0.5, 0);
       camUpdate();
     });
     buildPieceList();
