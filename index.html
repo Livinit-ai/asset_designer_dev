@@ -68,6 +68,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .prod-tab{display:flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid var(--border);background:transparent;border-radius:8px;cursor:pointer;font-family:var(--font-b);transition:all .15s;color:var(--text-mid)}
 .prod-tab.active{background:var(--accent-pale);border-color:var(--accent);color:var(--accent)}
 .prod-tab:hover:not(.active){background:var(--bg);color:var(--text)}
+.prod-tab--locked{opacity:.3;cursor:not-allowed;pointer-events:none}
 .prod-tab-thumb{width:32px;height:32px;border-radius:4px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .prod-tab.active .prod-tab-thumb{background:var(--accent-pale);border-color:var(--accent)}
 .prod-tab-info{text-align:left}
@@ -177,6 +178,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
 .room-sec-btn:hover:not(.active){border-color:var(--border-strong);color:var(--text);background:var(--surface)}
 .room-sec-btn--soon{opacity:.55;cursor:not-allowed;position:relative}
 .room-sec-btn--soon:hover{border-color:var(--border)!important;color:var(--text-muted)!important;background:var(--surface)!important}
+.room-sec-btn--locked{opacity:.35;cursor:not-allowed;pointer-events:none}
 .soon-badge{display:inline-block;font-size:7.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--accent);color:#fff;border-radius:20px;padding:1px 5px;margin-left:4px;vertical-align:middle}
 .room-sec-content{display:none}
 .room-sec-content.active{display:block}
@@ -814,10 +816,9 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
               <span style="display:block;font-size:14px;margin-bottom:1px">🛋</span>
               Living Room
             </button>
-            <button class="room-sec-btn room-sec-btn--soon" id="rsec-bedroom" onclick="showToast('Bedroom room view — Coming Soon')">
+            <button class="room-sec-btn" id="rsec-bedroom" onclick="setRoomSection('bedroom')">
               <span style="display:block;font-size:14px;margin-bottom:1px">🛏</span>
               Bedroom
-              <span class="soon-badge">Soon</span>
             </button>
           </div>
 
@@ -839,12 +840,26 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
             </div>
           </div><!-- /living room content -->
 
-          <!-- Bedroom content — Coming Soon -->
+          <!-- Bedroom content -->
           <div id="rsec-bedroom-content" class="room-sec-content">
-            <div class="bedroom-coming-soon">
-              <div class="bcs-icon">🛏</div>
-              <div class="bcs-title">Bedroom View</div>
-              <div class="bcs-sub">Coming Soon</div>
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Room Elements
+              </div>
+              <div class="room-chips-grid">
+                <button class="room-chip on" id="chip-bedroom-curtains" onclick="toggleBedroomCurtains()"><span class="room-chip-ico">🪟</span>Curtains</button>
+              </div>
+            </div>
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 9h20M7 3v18M17 3v18" stroke-linecap="round"/></svg>
+                Bed Style
+              </div>
+              <div class="room-chips-grid">
+                <button class="room-chip on" id="chip-bed-wooden" onclick="switchModel('bed_wooden')"><span class="room-chip-ico">🪵</span>Wooden</button>
+                <button class="room-chip" id="chip-bed-fabric" onclick="switchModel('bed_fabric')"><span class="room-chip-ico">🛏</span>Fabric</button>
+              </div>
             </div>
           </div><!-- /bedroom content -->
 
@@ -1187,9 +1202,14 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
 // ── Constants ─────────────────────────────────────────────────────────────
 const CHAIR_GLB      = '/api/s3proxy?key=custom_assets/chair_split.glb';
 const SOFA_GLB       = '/api/s3proxy?key=custom_assets/sofa.glb';
-const BED_WOODEN_GLB = '/api/s3proxy?key=custom_assets/bed_wooden_frame.glb';
-const BED_FABRIC_GLB = '/api/s3proxy?key=custom_assets/bed_fabric_frame.glb';
-const ROOM_GLB       = '/api/s3proxy?key=glbs/room_new.glb';
+const BED_WOODEN_GLB      = '/api/s3proxy?key=custom_assets/bed_wooden_frame.glb';
+const BED_FABRIC_GLB      = '/api/s3proxy?key=custom_assets/bed_fabric_frame.glb';
+const ROOM_GLB            = '/api/s3proxy?key=glbs/room_new.glb';
+const BEDROOM_ROOM_GLB = '/api/s3proxy?key=glbs/bed_room_uni.glb';
+const BEDROOM_SLOTS = {
+  bed_wooden: { x: -0.300, z: 1.250, rotY: Math.PI, scale: 1.8 },
+  bed_fabric: { x: -0.300, z: 1.250, rotY: Math.PI, scale: 1.8 },
+};
 function getGLBUrl(key){return{chair:CHAIR_GLB,sofa:SOFA_GLB,bed_wooden:BED_WOODEN_GLB,bed_fabric:BED_FABRIC_GLB}[key]||null;}
 const MITY_IMG  = 'https://fabrics.mityinc.com/server/public/fabrics/';
 const POLY_API  = 'https://api.polyhaven.com/files/';
@@ -1557,6 +1577,7 @@ let tcMode = 'translate';
 
 // Curtain mesh entries (added to meshEntries when room loads)
 let curtainMeshEntries = [];
+let bedroomCurtainsVisible = true;
 
 // Piece system (room mode per-mesh fabric targeting)
 let selectedPieceId = null; // which meshEntry.id is targeted in room mode
@@ -1609,7 +1630,7 @@ function makeGreyscaleTex(origTex) {
     const ctx = c.getContext('2d');
     if(!ctx) return null;
     ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,w,h);
-    ctx.filter = 'grayscale(100%) brightness(1.2) contrast(1.1)';
+    ctx.filter = 'grayscale(100%) brightness(1.8) contrast(0.85)';
     ctx.drawImage(img,0,0,w,h);
     const t = new THREE.CanvasTexture(c);
     t.encoding = origTex.encoding || THREE.sRGBEncoding;
@@ -2313,6 +2334,8 @@ function processGLTF(gltf) {
         let origGreyscaleMap=null;
         if(origMat.map){origGreyscaleMap=makeGreyscaleTex(origMat.map);if(origGreyscaleMap)greyMat.map=origGreyscaleMap;}
         greyMat.needsUpdate=true;
+        origMat._livinitGrey = greyMat; // so _rebuildMeshEntries reuses this mat (with any applied fabric)
+        greyMat._livinitGrey = greyMat; // self-ref: mesh.material == greyMat after processGLTF, so _rebuildMeshEntries finds it here
 
         const KNOWN={
           'wooden frame':'Frame','fabric frame':'Frame','bed frame':'Frame','frame':'Frame',
@@ -2458,10 +2481,6 @@ function loadModel(url) {
 
 function switchModel(key) {
   // Bed models are not available in room view
-  if (roomMode && (key === 'bed_wooden' || key === 'bed_fabric')) {
-    showToast('Bed room view — Coming Soon');
-    return;
-  }
   // ── 1. Save snapshot of current model before switching ─────────────────
   if (meshEntries.length > 0) {
     modelMaterialSnapshots[currentModelKey] = meshEntries.map(e => ({
@@ -2477,10 +2496,6 @@ function switchModel(key) {
   if (_bedFabTab) _bedFabTab.classList.toggle('active', key === 'bed_fabric');
   const _titleMap = {chair:'Chair Fabrics',sofa:'Sofa Fabrics',bed_wooden:'Bed — Wooden Frame',bed_fabric:'Bed — Fabric Frame'};
   document.getElementById('lib-title').textContent = _titleMap[key] || 'Fabrics';
-  // Grey out Room nav when on a bed (room view not available yet)
-  const _isBed = key === 'bed_wooden' || key === 'bed_fabric';
-  const _navRoom = document.getElementById('nav-room');
-  if (_navRoom) { _navRoom.style.opacity = _isBed ? '0.4' : ''; _navRoom.title = _isBed ? 'Room view — Coming Soon for beds' : ''; }
   // Sync bedroom bed-style chips if in bedroom section
   ['bed_wooden','bed_fabric'].forEach(bk => {
     const c = document.getElementById('chip-bed-'+bk.replace('bed_',''));
@@ -2488,6 +2503,7 @@ function switchModel(key) {
   });
   buildLibrary();
   updateProductInfo();
+  if (roomMode) _syncRoomSectionLock();
 
   if (roomMode) {
     // ── Room mode: both models stay in scene, just swap which is "active" ──
@@ -2499,8 +2515,9 @@ function switchModel(key) {
       // produce different object instances, causing the cached ref to be orphaned.
       if (!scene.getObjectById(currentModel.id)) {
         scene.add(currentModel);
-        const s = FURNITURE_SLOTS[key];
-        _seatOnFloor(currentModel, s.x, s.z, s.rotY, s.scale || 1.0);
+        const _ks = (activeRoomSection === 'bedroom' && BEDROOM_SLOTS[key]) ? BEDROOM_SLOTS : FURNITURE_SLOTS;
+        const s = _ks[key];
+        if (s) _seatOnFloor(currentModel, s.x, s.z, s.rotY, s.scale || 1.0);
       }
       // Companion behaviour: living room keeps both pieces visible; bedroom shows only the active bed
       if (prevKey && roomFurnitureModels[prevKey]) {
@@ -2510,7 +2527,7 @@ function switchModel(key) {
         } else if (!scene.getObjectById(prevModel.id)) {
           scene.add(prevModel);
           const ps = FURNITURE_SLOTS[prevKey];
-          _seatOnFloor(prevModel, ps.x, ps.z, ps.rotY, ps.scale || 1.0);
+          if (ps) _seatOnFloor(prevModel, ps.x, ps.z, ps.rotY, ps.scale || 1.0);
         }
       }
       meshEntries = [];
@@ -2531,7 +2548,11 @@ function switchModel(key) {
           scene.remove(roomFurnitureModels[key]);
           roomFurnitureModels[key] = null;
         }
-        if (currentModel) roomFurnitureModels[prevKey] = currentModel;
+        if (currentModel) {
+          roomFurnitureModels[prevKey] = currentModel;
+          // In bedroom mode only one bed is shown — remove the old one before adding new
+          if (activeRoomSection === 'bedroom') scene.remove(currentModel);
+        }
         currentModel = gltf.scene;
         // Normalise scale the same way processGLTF does
         const b = new THREE.Box3().setFromObject(currentModel);
@@ -2588,7 +2609,10 @@ function _rebuildMeshEntries(model, modelKey) {
 
       const meshBox = new THREE.Box3().setFromObject(mesh);
       const ms = meshBox.getSize(new THREE.Vector3());
-      const maxDim = Math.max(ms.x, ms.y, ms.z);
+      let maxDim = Math.max(ms.x, ms.y, ms.z);
+      // Normalize uvScaleFactor to processGLTF scale so fabric tiling matches product view
+      // regardless of slotScale. _seatOnFloor stores _baseScale when slotScale != 1.0.
+      if (model._baseScale && model.scale.x > 0) maxDim *= (model._baseScale.x / model.scale.x);
 
       // Name from node name
       const KNOWN = {
@@ -2636,7 +2660,7 @@ function _rebuildMeshEntries(model, modelKey) {
         id: `m-${meshCounter}-${index}`, name: cleanName,
         mesh, matIndex: index, origMat, greyMat,
         checked: false, pieceSelected: false,
-        uvScaleFactor: maxDim > 0 ? maxDim : 1,
+        uvScaleFactor: maxDim > 0 ? maxDim : 1, // maxDim already normalized above by _baseScale/scale ratio
       });
       meshCounter++;
     });
@@ -2845,11 +2869,6 @@ function filterFabricSearch(value) {
 
 // ── Room View ─────────────────────────────────────────────────────────────
 function toggleRoomView() {
-  // Bed models don't have room view yet
-  if (!roomMode && (currentModelKey === 'bed_wooden' || currentModelKey === 'bed_fabric')) {
-    showToast('Room view for beds — Coming Soon');
-    return;
-  }
   roomMode = !roomMode;
   const btn = document.getElementById('btn-room-view');
   if(btn){ btn.classList.toggle('active-view', roomMode); btn.textContent = roomMode ? '× Exit Room' : '🏠 Room View'; }
@@ -2871,17 +2890,39 @@ function toggleRoomView() {
         id: e.id, name: e.name, matClone: e.greyMat.clone(),
       }));
     }
-    // Camera will be set inside buildRoom() once room GLB loads
-    // and we know the actual floor Y. Pass a callback.
-    buildRoom(() => {
-      // Look INTO the room interior from the open front-right corner.
-      // phi=1.15 (66° from zenith) gives a near-eye-level interior angle.
-      sph = {theta: 0.05 + Math.PI, phi: 1.15, r: 7.0};
-      tgt.set(0, -0.3, 0);
-      camUpdate();
+    // Auto-select room section based on furniture type
+    const _enterBed = currentModelKey === 'bed_wooden' || currentModelKey === 'bed_fabric';
+    activeRoomSection = _enterBed ? 'bedroom' : 'living';
+    ['living','bedroom'].forEach(s => {
+      const _rb = document.getElementById('rsec-'+s);
+      const _rc = document.getElementById('rsec-'+s+'-content');
+      if (_rb) _rb.classList.toggle('active', s === activeRoomSection);
+      if (_rc) _rc.classList.toggle('active', s === activeRoomSection);
     });
+    _syncRoomSectionLock();
+    _syncProductTabLock();
+    if (_enterBed) {
+      buildBedroomRoom(() => {
+        sph = {theta: Math.PI, phi: 1.1, r: 9.0};
+        tgt.set(0, 0, 0);
+        camUpdate();
+      });
+    } else {
+      buildRoom(() => {
+        // Look INTO the room interior from the open front-right corner.
+        sph = {theta: 0.05 + Math.PI, phi: 1.15, r: 7.0};
+        tgt.set(0, -0.3, 0);
+        camUpdate();
+      });
+    }
     buildPieceList();
   } else {
+    // Unlock both section tabs and product tabs when leaving room mode
+    ['rsec-living','rsec-bedroom'].forEach(id => {
+      const b = document.getElementById(id);
+      if (b) b.classList.remove('room-sec-btn--locked');
+    });
+    _syncProductTabLock(); // clears all prod-tab--locked since roomMode is now false
     removeRoom();
     // Restore the active model to clean centered product-view position
     if (currentModel) {
@@ -3006,6 +3047,132 @@ function _buildProceduralRoom() {
   roomElements.floor=floor; roomGroup.add(floor);
 }
 
+// ── Bedroom Room ─────────────────────────────────────────────────────────
+function buildBedroomRoom(onReadyCallback) {
+  removeRoom();
+  roomGroup = new THREE.Group();
+  scene.add(roomGroup);
+
+  const bedroomUrl = BEDROOM_ROOM_GLB;
+  document.getElementById('loading').classList.add('on');
+  document.getElementById('load-txt').textContent = 'Loading Bedroom…';
+
+  gltfLoader.load(bedroomUrl, gltf => {
+    const fullScene = gltf.scene;
+    console.log('[Bedroom] GLB loaded:', bedroomUrl, '| children:', fullScene.children.length);
+
+    fullScene.scale.setScalar(0.9487);
+    fullScene.rotation.y = Math.PI;
+    fullScene.position.set(1.923, -1.817, 2.783);
+    fullScene.updateWorldMatrix(false, true);
+    roomFloorY = -1.6;
+
+    // DoubleSide on room arch so walls are visible from camera
+    const roomArch = fullScene.getObjectByName('_9_minimalist_medium') || fullScene;
+    roomArch.traverse(child => {
+      if (!child.isMesh) return;
+      const mats = Array.isArray(child.material) ? child.material : [child.material];
+      mats.forEach(m => { if (m) { m.side = THREE.DoubleSide; m.needsUpdate = true; } });
+    });
+
+    roomGroup.add(fullScene);
+    console.log('[Bedroom] room placed | scale:', fullScene.scale.x.toFixed(4), '| pos:', fullScene.position.x.toFixed(3), fullScene.position.y.toFixed(3), fullScene.position.z.toFixed(3));
+
+    // Tag room elements for chip toggles
+    roomArch.traverse(child => {
+      const n = (child.name || '').toLowerCase();
+      if (n.includes('wall') || n.includes('arch')) roomElements.walls   = roomElements.walls   || child;
+      if (n.includes('floor') || n.includes('ground')) roomElements.floor = roomElements.floor || child;
+      if (n.includes('window') || n.includes('glass')) roomElements.windows = roomElements.windows || child;
+      if (n.includes('ceiling') || n.includes('ceil')) roomElements.ceiling = roomElements.ceiling || child;
+    });
+
+    // Build curtain entries
+    _buildBedroomCurtainEntries(roomArch);
+    if (curtainMeshEntries.length > 0) {
+      meshEntries = meshEntries.filter(e => !e._isCurtain);
+      meshEntries.push(curtainMeshEntries[0]);
+    }
+    bedroomCurtainsVisible = true;
+    const _cc = document.getElementById('chip-bedroom-curtains');
+    if (_cc) _cc.classList.add('on');
+
+    // Sync bed-style chips
+    ['bed_wooden', 'bed_fabric'].forEach(bk => {
+      const c = document.getElementById('chip-bed-' + bk.replace('bed_', ''));
+      if (c) c.classList.toggle('on', bk === currentModelKey);
+    });
+
+    // Place bed using calibrated slot, then restore fabric state from product view
+    if (currentModel) {
+      const bs = BEDROOM_SLOTS[currentModelKey];
+      _seatOnFloor(currentModel, bs.x, bs.z, bs.rotY, bs.scale);
+      roomFurnitureModels[currentModelKey] = currentModel;
+      if (!scene.getObjectById(currentModel.id)) scene.add(currentModel);
+      // _rebuildMeshEntries reuses origMat._livinitGrey (set in product view) so
+      // fabric selections carry through automatically — no snapshot apply needed.
+      _rebuildMeshEntries(currentModel, currentModelKey);
+    }
+
+    document.getElementById('loading').classList.remove('on');
+    if (onReadyCallback) onReadyCallback();
+    buildPieceList();
+    markDirty();
+  }, undefined, err => {
+    console.error('[Bedroom] GLB load error:', err);
+    document.getElementById('loading').classList.remove('on');
+    showToast('Bedroom room failed');
+    if (onReadyCallback) onReadyCallback();
+    markDirty();
+  });
+}
+
+
+function _buildBedroomCurtainEntries(roomScene) {
+  const curtainNodes = [];
+  roomScene.traverse(c => {
+    if (c.name === 'curtains_1' || c.name === 'curtains_2') curtainNodes.push(c);
+  });
+  if (!curtainNodes.length) { console.log('[Bedroom] no curtain nodes found'); return; }
+
+  const sharedGreyMat = new THREE.MeshStandardMaterial({
+    color: 0xd4c8b8, roughness: 0.8, metalness: 0, side: THREE.DoubleSide,
+  });
+  let idx = 0;
+  curtainNodes.forEach(node => {
+    node.traverse(child => {
+      if (!child.isMesh || !child.material) return;
+      const origMat = Array.isArray(child.material) ? child.material[0] : child.material;
+      child.material = sharedGreyMat;
+      curtainMeshEntries.push({
+        id: `curtain-${idx++}`,
+        name: idx === 1 ? 'Curtains' : null,
+        mesh: child,
+        matIndex: 0,
+        origMat: origMat || sharedGreyMat,
+        greyMat: sharedGreyMat,
+        origGreyscaleMap: null,
+        checked: false,
+        pieceSelected: false,
+        uvScaleFactor: 0.3,
+        _isCurtain: true,
+      });
+    });
+  });
+  if (curtainMeshEntries.length > 0) {
+    curtainMeshEntries[0].name = 'Curtains';
+    console.log(`[Bedroom] built ${curtainMeshEntries.length} curtain entries`);
+  }
+}
+
+function toggleBedroomCurtains() {
+  bedroomCurtainsVisible = !bedroomCurtainsVisible;
+  const btn = document.getElementById('chip-bedroom-curtains');
+  if (btn) btn.classList.toggle('on', bedroomCurtainsVisible);
+  curtainMeshEntries.forEach(e => { e.mesh.visible = bedroomCurtainsVisible; });
+  markDirty();
+}
+
 // ── Furniture placement ──────────────────────────────────────────────────
 //
 //  DESIGN:
@@ -3065,8 +3232,10 @@ function _seatOnFloor(model, slotX, slotZ, rotY, slotScale) {
 function _placeFurnitureInRoom() {
   // ── Active model ────────────────────────────────────────────────────────
   if (currentModel) {
-    const s = FURNITURE_SLOTS[currentModelKey];
-    _seatOnFloor(currentModel, s.x, s.z, s.rotY, s.scale || 1.0);
+    const _fs = (activeRoomSection === 'bedroom' && BEDROOM_SLOTS[currentModelKey])
+      ? BEDROOM_SLOTS : FURNITURE_SLOTS;
+    const s = _fs[currentModelKey];
+    if (s) _seatOnFloor(currentModel, s.x, s.z, s.rotY, s.scale || 1.0);
     roomFurnitureModels[currentModelKey] = currentModel;
     if (!scene.getObjectById(currentModel.id)) scene.add(currentModel);
   }
@@ -3167,8 +3336,42 @@ function toggleRoomEl(key) {
   if(el) { el.visible = roomVisible[key]; markDirty(); }
 }
 
+// ── Room section lock — prevent switching to incompatible section ─────────
+function _syncRoomSectionLock() {
+  const isBed = currentModelKey === 'bed_wooden' || currentModelKey === 'bed_fabric';
+  const btnLiving  = document.getElementById('rsec-living');
+  const btnBedroom = document.getElementById('rsec-bedroom');
+  if (btnLiving)  btnLiving.classList.toggle('room-sec-btn--locked',  isBed);
+  if (btnBedroom) btnBedroom.classList.toggle('room-sec-btn--locked', !isBed);
+}
+
+// ── Product tab lock — grey out incompatible tabs while in room mode ──────
+function _syncProductTabLock() {
+  if (!roomMode) {
+    // Unlock all when not in room mode
+    ['tab-chair','tab-sofa','tab-bed_fabric'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('prod-tab--locked');
+    });
+    return;
+  }
+  const inBedroom = activeRoomSection === 'bedroom';
+  // In bedroom → lock chair + sofa. In living → lock fabric bed tab.
+  const livingIds = ['tab-chair','tab-sofa'];
+  const bedIds    = ['tab-bed_fabric'];
+  livingIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('prod-tab--locked', inBedroom);
+  });
+  bedIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.toggle('prod-tab--locked', !inBedroom);
+  });
+}
+
 // ── Room Sections ────────────────────────────────────────────────────────
 function setRoomSection(section) {
+  if (activeRoomSection === section && roomMode) return;
   activeRoomSection = section;
   ['living','bedroom'].forEach(s => {
     document.getElementById('rsec-'+s).classList.toggle('active', s===section);
@@ -3179,19 +3382,37 @@ function setRoomSection(section) {
   if (lbl) lbl.textContent = section === 'bedroom' ? 'Bed Parts' : 'Furniture Parts';
 
   if (!roomMode) return;
+  _syncRoomSectionLock();
+  _syncProductTabLock();
 
   if (section === 'bedroom') {
-    // Hide living room furniture
     ['chair','sofa'].forEach(k => { if(roomFurnitureModels[k]) scene.remove(roomFurnitureModels[k]); });
-    // Load default bed (or restore whichever was last active in bedroom)
     const bedKey = (currentModelKey==='bed_wooden'||currentModelKey==='bed_fabric') ? currentModelKey : 'bed_wooden';
-    switchModel(bedKey);
+    if (currentModelKey !== bedKey) {
+      currentModelKey = bedKey;
+      buildLibrary(); updateProductInfo();
+      document.getElementById('tab-chair').classList.remove('active');
+      document.getElementById('tab-sofa').classList.remove('active');
+      const _bt = document.getElementById('tab-bed_fabric');
+      if (_bt) _bt.classList.toggle('active', bedKey === 'bed_fabric');
+    }
+    buildBedroomRoom(() => {
+      sph = {theta: Math.PI, phi: 1.1, r: 9.0};
+      tgt.set(0, 0, 0);
+      camUpdate();
+    });
   } else {
-    // Hide bedroom furniture
     ['bed_wooden','bed_fabric'].forEach(k => { if(roomFurnitureModels[k]) scene.remove(roomFurnitureModels[k]); });
-    // Restore living room furniture
     const livingKey = (currentModelKey==='chair'||currentModelKey==='sofa') ? currentModelKey : 'chair';
-    switchModel(livingKey);
+    if (currentModelKey !== livingKey) {
+      currentModelKey = livingKey;
+      buildLibrary(); updateProductInfo();
+    }
+    buildRoom(() => {
+      sph = {theta: 0.05 + Math.PI, phi: 1.15, r: 7.0};
+      tgt.set(0, -0.3, 0);
+      camUpdate();
+    });
   }
 }
 
@@ -3730,8 +3951,9 @@ function initThree() {
       return;
     }
 
-    // Find which furniture model was hit
-    const furnitureModels = Object.values(roomFurnitureModels).filter(Boolean);
+    // Find which furniture model was hit — only consider models for the active section
+    const _validKeys = activeRoomSection === 'bedroom' ? ['bed_wooden','bed_fabric'] : ['chair','sofa'];
+    const furnitureModels = _validKeys.map(k => roomFurnitureModels[k]).filter(Boolean);
     const hits = raycaster.intersectObjects(furnitureModels, true);
     if (!hits.length) return;
 
