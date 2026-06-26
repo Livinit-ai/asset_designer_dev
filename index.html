@@ -97,12 +97,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 
 /* ── Zone Overlay ──────────────────────────────────────────────────────── */
 #zone-overlay{position:absolute;inset:0;pointer-events:none}
-#zone-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.zone-label{position:absolute;display:inline-flex;align-items:center;background:rgba(255,255,255,.96);border:1.5px solid var(--border);border-radius:20px;padding:5px 12px;font-size:10.5px;font-weight:600;color:var(--text);cursor:pointer;pointer-events:auto;box-shadow:0 4px 16px rgba(0,0,0,.12),0 1px 4px rgba(0,0,0,.06);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);transition:border-color .18s,background .18s,color .18s,box-shadow .18s,transform .15s;white-space:nowrap;user-select:none;opacity:0}
-.zone-label:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 4px 20px rgba(124,58,237,.2);transform:scale(1.05) translateY(-1px)}
-.zone-label.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 20px rgba(124,58,237,.35)}
-@keyframes zone-pulse{0%{r:4px;opacity:.55}100%{r:14px;opacity:0}}
-.zone-anchor-ring{animation:zone-pulse 2.2s ease-out infinite}
+.zone-label{position:absolute;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.92);border:1.5px solid var(--border);border-radius:20px;padding:4px 10px;font-size:10px;font-weight:600;color:var(--text-mid);cursor:pointer;pointer-events:auto;box-shadow:0 2px 8px rgba(0,0,0,.1);backdrop-filter:blur(6px);transition:border-color .15s,background .15s,color .15s;white-space:nowrap;user-select:none;opacity:0}
+.zone-label::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--border-strong);flex-shrink:0;transition:background .15s}
+.zone-label:hover{border-color:var(--accent);color:var(--accent)}
+.zone-label:hover::before{background:var(--accent)}
+.zone-label.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.zone-label.active::before{background:rgba(255,255,255,.75)}
 
 /* ── Viewport controls bar ─────────────────────────────────────────────── */
 .vp-controls{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:0;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.75);border-radius:32px;padding:7px 14px;backdrop-filter:blur(24px) saturate(200%);-webkit-backdrop-filter:blur(24px) saturate(200%);box-shadow:0 4px 20px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.9)}
@@ -4049,38 +4049,7 @@ function rebuildZoneOverlay() {
   _zoneLabelsReady = false;
   if(!meshEntries.length) { _updateZoneCountBadge(); return; }
 
-  const NS = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(NS, 'svg');
-  svg.id = 'zone-svg';
-  overlay.appendChild(svg);
-
-  meshEntries.forEach((entry, i) => {
-    // Connector line
-    const line = document.createElementNS(NS, 'line');
-    line.setAttribute('data-eid', entry.id);
-    line.setAttribute('stroke', 'rgba(124,58,237,0.28)');
-    line.setAttribute('stroke-width', '1.5');
-    line.setAttribute('stroke-dasharray', '5 3');
-    line.setAttribute('stroke-linecap', 'round');
-    svg.appendChild(line);
-
-    // Anchor group: pulsing ring + solid dot
-    const g = document.createElementNS(NS, 'g');
-    g.setAttribute('data-eid', entry.id);
-    const ring = document.createElementNS(NS, 'circle');
-    ring.setAttribute('cx', '0'); ring.setAttribute('cy', '0'); ring.setAttribute('r', '4');
-    ring.setAttribute('fill', 'rgba(124,58,237,0.22)'); ring.setAttribute('stroke', 'none');
-    ring.classList.add('zone-anchor-ring');
-    ring.style.animationDelay = (i * 0.35) + 's';
-    g.appendChild(ring);
-    const dot = document.createElementNS(NS, 'circle');
-    dot.setAttribute('cx', '0'); dot.setAttribute('cy', '0'); dot.setAttribute('r', '4');
-    dot.setAttribute('fill', '#7C3AED');
-    dot.setAttribute('stroke', '#fff'); dot.setAttribute('stroke-width', '2');
-    g.appendChild(dot);
-    svg.appendChild(g);
-
-    // Floating label
+  meshEntries.forEach(entry => {
     const label = document.createElement('div');
     label.className = 'zone-label';
     label.dataset.eid = entry.id;
@@ -4120,25 +4089,9 @@ function _zoneClick(entryId) {
 }
 
 function _refreshZoneLabelStates() {
-  const overlay = document.getElementById('zone-overlay');
-  const svg = overlay && overlay.querySelector('#zone-svg');
   document.querySelectorAll('#zone-overlay .zone-label').forEach(l => {
-    const eid = l.dataset.eid;
-    const entry = meshEntries.find(e => e.id === eid);
-    const isActive = !!(entry && entry.checked);
-    l.classList.toggle('active', isActive);
-    if(svg) {
-      const line = svg.querySelector(`line[data-eid="${eid}"]`);
-      const g = svg.querySelector(`g[data-eid="${eid}"]`);
-      if(line) {
-        line.setAttribute('stroke', isActive ? 'rgba(124,58,237,0.6)' : 'rgba(124,58,237,0.28)');
-        line.setAttribute('stroke-dasharray', isActive ? '' : '5 3');
-      }
-      if(g) {
-        const dot = g.querySelectorAll('circle')[1];
-        if(dot) dot.setAttribute('fill', isActive ? '#5B21B6' : '#7C3AED');
-      }
-    }
+    const entry = meshEntries.find(e => e.id === l.dataset.eid);
+    l.classList.toggle('active', !!(entry && entry.checked));
   });
 }
 
@@ -4150,88 +4103,37 @@ function updateZoneLabelPositions() {
   if(!canvas) return;
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if(W === 0 || H === 0) return;
-  const svg = overlay.querySelector('#zone-svg');
 
-  // Phase 1 — project all mesh centers, compute initial label positions
-  const items = [];
-  const hidden = [];
   meshEntries.forEach((entry) => {
     const label = overlay.querySelector(`.zone-label[data-eid="${entry.id}"]`);
-    const svgLine = svg && svg.querySelector(`line[data-eid="${entry.id}"]`);
-    const svgG    = svg && svg.querySelector(`g[data-eid="${entry.id}"]`);
     if(!label) return;
     try {
       const box = new THREE.Box3().setFromObject(entry.mesh);
       const center = box.getCenter(new THREE.Vector3());
-      const proj = center.clone().project(camera);
-      if(proj.z >= 1) { hidden.push({ label, svgG }); return; }
+      const projected = center.clone().project(camera);
+      if(projected.z >= 1) { label.style.opacity = '0'; return; }
 
-      const sx = (proj.x * 0.5 + 0.5) * W;
-      const sy = (-proj.y * 0.5 + 0.5) * H;
+      const sx = (projected.x * 0.5 + 0.5) * W;
+      const sy = (-projected.y * 0.5 + 0.5) * H;
 
-      // Push outward from focal centre — stronger push the closer to centre
-      const cx = W * 0.5, cy = H * 0.42;
+      // Push label outward from viewport center
+      const cx = W * 0.5, cy = H * 0.45;
       let dx = sx - cx, dy = sy - cy;
-      const dist = Math.sqrt(dx*dx + dy*dy) || 1;
-      const push = Math.max(110, 160 - dist * 0.25);
-      const lx0 = sx + (dx / dist) * push;
-      const ly0 = sy + (dy / dist) * push;
+      const len = Math.sqrt(dx*dx + dy*dy) || 1;
+      dx /= len; dy /= len;
+      let lx = sx + dx * 85;
+      let ly = sy + dy * 70;
 
-      const lw = label.offsetWidth || 110;
-      const lh = label.offsetHeight || 28;
-      items.push({ label, svgLine, svgG, sx, sy, lx: lx0, ly: ly0, lw, lh });
-    } catch(_) { hidden.push({ label, svgG }); }
-  });
+      // Clamp within viewport with padding
+      const lw = 120, lh = 28;
+      lx = Math.max(lw/2 + 8, Math.min(W - lw/2 - 8, lx));
+      ly = Math.max(lh/2 + 8, Math.min(H - lh/2 - 44, ly));
 
-  // Hide culled labels
-  hidden.forEach(({ label, svgG }) => {
-    label.style.opacity = '0';
-    if(svgG) svgG.style.opacity = '0';
-  });
-
-  // Phase 2 — iterative overlap separation (up to 20 passes)
-  for(let iter = 0; iter < 20; iter++) {
-    let moved = false;
-    for(let i = 0; i < items.length; i++) {
-      for(let j = i + 1; j < items.length; j++) {
-        const a = items[i], b = items[j];
-        const gapX = (a.lw + b.lw) / 2 + 12;
-        const gapY = (a.lh + b.lh) / 2 + 10;
-        const odx = a.lx - b.lx, ody = a.ly - b.ly;
-        const ox = gapX - Math.abs(odx);
-        const oy = gapY - Math.abs(ody);
-        if(ox > 0 && oy > 0) {
-          // Separate along the axis with the smaller overlap
-          if(ox < oy) {
-            const push = (ox * 0.5 + 1) * (odx >= 0 ? 1 : -1);
-            a.lx += push; b.lx -= push;
-          } else {
-            const push = (oy * 0.5 + 1) * (ody >= 0 ? 1 : -1);
-            a.ly += push; b.ly -= push;
-          }
-          moved = true;
-        }
-      }
-    }
-    if(!moved) break;
-  }
-
-  // Phase 3 — clamp to viewport, then write DOM
-  items.forEach(({ label, svgLine, svgG, sx, sy, lx, ly, lw, lh }) => {
-    lx = Math.max(lw/2 + 8, Math.min(W - lw/2 - 8, lx));
-    ly = Math.max(lh/2 + 8, Math.min(H - lh/2 - 44, ly));
-
-    label.style.left = (lx - lw/2) + 'px';
-    label.style.top  = (ly - lh/2) + 'px';
-    label.style.opacity = '1';
-
-    if(svgLine) {
-      svgLine.setAttribute('x1', sx); svgLine.setAttribute('y1', sy);
-      svgLine.setAttribute('x2', lx); svgLine.setAttribute('y2', ly);
-    }
-    if(svgG) {
-      svgG.setAttribute('transform', `translate(${sx},${sy})`);
-      svgG.style.opacity = '1';
+      label.style.left = (lx - lw/2) + 'px';
+      label.style.top  = (ly - lh/2) + 'px';
+      label.style.opacity = '1';
+    } catch(e) {
+      label.style.opacity = '0';
     }
   });
 }
