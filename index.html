@@ -1614,6 +1614,7 @@ function markDirty(){ _dirty = true; }
 
 // ── Room state ─────────────────────────────────────────────────────────────
 let roomGroup = null;
+let _roomLoadGen = 0; // increments on each new room build; callbacks use this to detect stale loads
 let roomElements = {walls:null, floor:null, windows:null, doors:null, rug:null, ceiling:null};
 let roomVisible = {walls:true, floor:true, windows:true, doors:true, rug:true, ceiling:false};
 let explodeVal = 0;
@@ -3229,6 +3230,7 @@ function toggleRoomView() {
 // ── Room geometry ─────────────────────────────────────────────────────────
 function buildRoom(onReadyCallback) {
   removeRoom();
+  const _gen = ++_roomLoadGen;
   roomGroup = new THREE.Group();
   scene.add(roomGroup);
 
@@ -3237,6 +3239,7 @@ function buildRoom(onReadyCallback) {
   document.getElementById('load-txt').textContent = 'Loading Room…';
 
   gltfLoader.load(ROOM_GLB, gltf => {
+    if (_roomLoadGen !== _gen) return; // superseded by a newer room build
     const roomScene = gltf.scene;
 
     // ── Scale room to ~6 units wide ──────────────────────────────────────
@@ -3300,6 +3303,7 @@ function buildRoom(onReadyCallback) {
     buildPieceList();
     markDirty();
   }, undefined, err => {
+    if (_roomLoadGen !== _gen) return;
     console.error('Room GLB load error:', err);
     document.getElementById('loading').classList.remove('on');
     showToast('Room GLB failed — using fallback');
@@ -3325,6 +3329,7 @@ function _buildProceduralRoom() {
 // ── Bedroom Room ─────────────────────────────────────────────────────────
 function buildBedroomRoom(onReadyCallback) {
   removeRoom();
+  const _gen = ++_roomLoadGen;
   roomGroup = new THREE.Group();
   scene.add(roomGroup);
 
@@ -3333,6 +3338,7 @@ function buildBedroomRoom(onReadyCallback) {
   document.getElementById('load-txt').textContent = 'Loading Bedroom…';
 
   gltfLoader.load(bedroomUrl, gltf => {
+    if (_roomLoadGen !== _gen) return; // superseded by a newer room build
     const fullScene = gltf.scene;
     console.log('[Bedroom] GLB loaded:', bedroomUrl, '| children:', fullScene.children.length);
 
@@ -3398,6 +3404,7 @@ function buildBedroomRoom(onReadyCallback) {
     buildPieceList();
     markDirty();
   }, undefined, err => {
+    if (_roomLoadGen !== _gen) return;
     console.error('[Bedroom] GLB load error:', err);
     document.getElementById('loading').classList.remove('on');
     showToast('Bedroom room failed');
@@ -3516,6 +3523,7 @@ async function _applyCurtainMaterial() {
   }
   curtainMeshEntries.forEach(e => { e.mesh.visible = bedroomCurtainsVisible; });
 
+  const _gen = _roomLoadGen;
   const preset = CURTAIN_FABRICS.find(f => f.id === curtainState.fabric) || CURTAIN_FABRICS[0];
   let normTex = null, roughTex = null;
   try {
@@ -3530,6 +3538,7 @@ async function _applyCurtainMaterial() {
     if (!roughTex && preset.roughFallback) roughTex = await loadTexFirstSuccess(preset.roughFallback, false).catch(() => null);
   } catch (_) {}
 
+  if (_roomLoadGen !== _gen) return; // room was switched while textures loaded
   _curtainNormTex  = normTex;
   _curtainRoughTex = roughTex;
 
@@ -3726,8 +3735,9 @@ function _placeFurnitureInRoom() {
     _seatOnFloor(other, os.x, os.z, os.rotY, os.scale || 1.0);
   } else {
     // Load companion fresh
+    const _compGen = _roomLoadGen;
     gltfLoader.load(otherUrl, gltf => {
-      // Guard: switchModel may have already loaded this key while we were in flight
+      if (_roomLoadGen !== _compGen) return; // room changed while companion loaded
       if (roomFurnitureModels[otherKey]) return;
       const m = gltf.scene;
 
@@ -4228,12 +4238,8 @@ function _zoneClick(entryId) {
   const target = meshEntries.find(e => e.id === entryId);
   if(!target) return;
   const wasSoleSelected = target.checked && meshEntries.filter(e => e.checked).length === 1;
-  // Deselect all first
-  meshEntries.forEach(entry => {
-    entry.checked = false;
-    const matArr = Array.isArray(entry.mesh.material)?[...entry.mesh.material]:[entry.mesh.material];
-    if(entry.matIndex>=0&&entry.matIndex<matArr.length){matArr[entry.matIndex]=entry.origMat;entry.mesh.material=matArr;}
-  });
+  // Deselect all — leave mesh.material untouched so applied fabrics stay visible
+  meshEntries.forEach(entry => { entry.checked = false; });
   if(!wasSoleSelected) {
     // Select just this one
     target.checked = true;
