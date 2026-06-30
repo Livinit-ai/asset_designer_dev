@@ -213,11 +213,14 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
 .curtain-shape-btn.active svg{color:var(--accent)}
 .curtain-shape-btn:hover:not(.active){border-color:var(--border-strong);color:var(--text);background:var(--bg)}
 .curtain-shape-none{width:100%;flex-direction:row;justify-content:center;padding:6px;font-size:10px;margin-top:2px}
-.curtain-fabric-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
-.curtain-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:border-color .15s,transform .12s;flex-shrink:0;padding:0;outline:none;position:relative}
-.curtain-swatch.active{border-color:var(--accent);transform:scale(1.18)}
-.curtain-swatch:hover:not(.active){border-color:var(--border-strong);transform:scale(1.1)}
-.curtain-swatch-label{font-size:8.5px;color:var(--text-muted);text-align:center;display:block;margin-top:2px}
+.curtain-fabric-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.curtain-fab-card{display:flex;align-items:center;gap:7px;padding:6px 8px;border:1px solid var(--border);background:var(--surface);border-radius:8px;cursor:pointer;transition:all .15s;text-align:left;font-family:var(--font-b)}
+.curtain-fab-card:hover:not(.active){border-color:var(--border-strong);background:var(--bg)}
+.curtain-fab-card.active{border-color:var(--accent);background:var(--accent-pale)}
+.curtain-fab-dot{width:20px;height:20px;border-radius:50%;flex-shrink:0;border:1px solid rgba(0,0,0,.12)}
+.curtain-fab-text{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.curtain-fab-name{font-size:10.5px;font-weight:600;color:var(--text)}
+.curtain-fab-desc{font-size:8.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .curtain-color-row{display:flex;align-items:center;gap:8px;margin-top:10px}
 .curtain-color-label{font-size:10px;color:var(--text-mid);font-weight:500;margin-bottom:6px;display:block}
 .curtain-color-presets{display:flex;flex-direction:column;gap:6px}
@@ -3529,21 +3532,28 @@ function _initCurtainFabricSwatches() {
   const row = document.getElementById('curtain-fabric-row');
   if (row) {
     row.innerHTML = '';
+    const FAB_DESC = { linen:'natural slub', cotton:'soft matte', velvet:'luxe pile', silk:'lustrous',
+      voile:'sheer airy', 'cotton-blend':'easy care', wool:'warm dense', jacquard:'woven pattern', blackout:'room-darkening' };
     CURTAIN_FABRICS.forEach(f => {
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:2px';
-      const btn = document.createElement('button');
-      btn.className = 'curtain-swatch' + (f.id === curtainState.fabric ? ' active' : '');
-      btn.id = 'cfab-' + f.id;
-      btn.title = f.label;
-      btn.style.background = f.swatch;
-      btn.onclick = () => setCurtainFabric(f.id);
-      const lbl = document.createElement('span');
-      lbl.className = 'curtain-swatch-label';
-      lbl.textContent = f.label;
-      wrap.appendChild(btn);
-      wrap.appendChild(lbl);
-      row.appendChild(wrap);
+      const card = document.createElement('button');
+      card.className = 'curtain-fab-card' + (f.id === curtainState.fabric ? ' active' : '');
+      card.id = 'cfab-' + f.id;
+      card.title = f.label;
+      card.onclick = () => setCurtainFabric(f.id);
+      const dot = document.createElement('span');
+      dot.className = 'curtain-fab-dot';
+      dot.style.background = f.swatch;
+      const txt = document.createElement('span');
+      txt.className = 'curtain-fab-text';
+      const nm = document.createElement('span');
+      nm.className = 'curtain-fab-name';
+      nm.textContent = f.label;
+      const ds = document.createElement('span');
+      ds.className = 'curtain-fab-desc';
+      ds.textContent = FAB_DESC[f.id] || '';
+      txt.appendChild(nm); txt.appendChild(ds);
+      card.appendChild(dot); card.appendChild(txt);
+      row.appendChild(card);
     });
   }
   renderCurtainColorGroups();
@@ -3794,7 +3804,7 @@ function setCurtainShape(id) {
 function setCurtainFabric(id) {
   curtainState.fabric = id;
   _saveCurtainState();
-  document.querySelectorAll('.curtain-swatch').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.curtain-fab-card').forEach(b => b.classList.remove('active'));
   const btn = document.getElementById('cfab-' + id);
   if (btn) btn.classList.add('active');
   // Sync bar swatches
