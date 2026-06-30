@@ -4148,45 +4148,31 @@ async function renderScene() {
 }
 // ── View in My Room ───────────────────────────────────────────────────────
 
-async function captureIsolatedFurniture() {
-  if (!currentModel) return null;
-
-  const savedBg        = scene.background;
-  const savedClear     = renderer.getClearColor(new THREE.Color()).clone();
-  const savedClearAlpha= renderer.getClearAlpha();
-  const savedSph       = { ...sph };
-  const savedTgt       = tgt.clone();
-
-  // White background, hide room shell
-  scene.background = new THREE.Color(0xffffff);
-  renderer.setClearColor(0xffffff, 1);
-  if (roomGroup) roomGroup.visible = false;
-
-  // Aim camera at the furniture's bounding-box centre
-  const box    = new THREE.Box3().setFromObject(currentModel);
-  const center = box.getCenter(new THREE.Vector3());
-  const size   = box.getSize(new THREE.Vector3());
-  tgt.copy(center);
-  sph = { theta: 0.5, phi: 1.1, r: Math.max(size.x, size.y, size.z) * 2.8 };
-  camUpdate();
-
+// Capture the current room canvas as-is (furniture + curtains together)
+async function captureDesignedScene() {
   renderer.render(scene, camera);
   await new Promise(r => setTimeout(r, 80));
   renderer.render(scene, camera);
-  await new Promise(r => setTimeout(r, 60));
+  await new Promise(r => setTimeout(r, 40));
+  return renderer.domElement.toDataURL('image/jpeg', 0.88);
+}
 
-  const dataUrl = renderer.domElement.toDataURL('image/jpeg', 0.93);
-
-  // Restore
-  if (roomGroup) roomGroup.visible = true;
-  scene.background = savedBg;
-  renderer.setClearColor(savedClear, savedClearAlpha);
-  sph = savedSph;
-  tgt.copy(savedTgt);
-  camUpdate();
-  markDirty();
-
-  return dataUrl;
+// Resize + compress an image dataUrl so payload stays within Vercel's 4.5 MB limit
+function _vimrCompressImage(dataUrl, maxPx, quality) {
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.round(img.naturalWidth  * scale);
+      const h = Math.round(img.naturalHeight * scale);
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(c.toDataURL('image/jpeg', quality));
+    };
+    img.onerror = () => resolve(dataUrl); // fallback: send original
+    img.src = dataUrl;
+  });
 }
 
 function openViewInMyRoom() {
@@ -4295,27 +4281,32 @@ async function _vimrGenerate(ov, body, genBtn) {
   loadEl.innerHTML = `
     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="1.8" style="animation:spin 1.2s linear infinite"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
     <div style="font-size:14px;font-weight:700;color:#111;font-family:var(--font-d)">Generating your room view…</div>
-    <div style="font-size:11px;color:#9ca3af;line-height:1.6">Capturing your furniture · Clearing your room · Placing furniture<br>This may take 20–40 seconds</div>
+    <div style="font-size:11px;color:#9ca3af;line-height:1.6">Capturing your design · Analysing your room · Compositing<br>This may take 20–40 seconds</div>
   `;
   body.appendChild(loadEl);
 
   let furnitureRender = null;
   try {
-    furnitureRender = await captureIsolatedFurniture();
+    // Capture full scene (bed + curtains) then compress to ~900px
+    const raw = await captureDesignedScene();
+    furnitureRender = await _vimrCompressImage(raw, 900, 0.85);
   } catch (e) {
-    console.error('Furniture capture failed:', e);
+    console.error('Scene capture failed:', e);
   }
   if (!furnitureRender) {
-    body.innerHTML = '<div style="padding:32px;text-align:center;color:#ef4444;font-size:13px">Failed to capture furniture. Please try again.</div>';
+    body.innerHTML = '<div style="padding:32px;text-align:center;color:#ef4444;font-size:13px">Failed to capture your design. Please try again.</div>';
     return;
   }
+
+  // Compress user's room photo to keep total payload well under 4 MB
+  const compressedRoom = await _vimrCompressImage(_vimrRoomPhotoDataUrl, 1280, 0.82);
 
   try {
     const resp = await fetch('/api/gemini-room', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        roomPhoto: _vimrRoomPhotoDataUrl,
+        roomPhoto: compressedRoom,
         furnitureRender,
       }),
       signal: AbortSignal.timeout(90000),
