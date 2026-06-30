@@ -3903,6 +3903,17 @@ function _buildBlindsGeometry() {
   bottomrail.castShadow = true; bottomrail.receiveShadow = true;
   grp.add(bottomrail);
 
+  // Ladder cords down the face (toward the room) — the detail that sells "real blinds".
+  const cordMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(0xeae6dc), roughness: 0.8, metalness: 0 });
+  const cordLen = height + 0.06;
+  const cordGeo = new THREE.CylinderGeometry(0.004, 0.004, cordLen, 6); // axis = local Y (vertical)
+  for (const xf of [-0.28, 0.28]) {
+    const cord = new THREE.Mesh(cordGeo, cordMat);
+    cord.position.set(width * xf, 0, slatDepth * 0.5 + 0.005); // +Z = toward room, in front of louvers
+    grp.add(cord);
+  }
+  grp.userData.cordMat = cordMat;
+
   grp.userData.slatMat = slatMat;
   grp.userData.railMat = railMat;
   _blindsGroup = grp;
