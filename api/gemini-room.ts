@@ -1,26 +1,61 @@
 import { GoogleGenAI } from '@google/genai';
 
-const PROMPT = `You are a professional interior design compositor. You will receive two images.
+const PROMPT = `You are a world-class VFX compositor and interior design photographer with 20 years of experience making furniture composites completely indistinguishable from real photographs. Your output will be scrutinised by professional photographers — it must be flawless.
 
+You will receive two images:
 IMAGE 1 = a real photograph of the user's room.
-IMAGE 2 = a photorealistic product photo of a sofa and/or accent chair on a neutral background, showing the exact custom fabrics the user has configured.
+IMAGE 2 = a photorealistic product photo of a sofa and/or accent chair on a neutral background, with the exact custom fabrics the user has designed.
 
-YOUR TASK: Produce a single photorealistic interior photograph showing IMAGE 1's room with the furniture from IMAGE 2 naturally placed inside it — looking like a real professional interior photo taken with the furniture already in the room.
+YOUR GOAL: Produce one image that looks like IMAGE 1's room was photographed on the same day with IMAGE 2's furniture already sitting inside it — zero evidence of compositing.
 
-INTEGRATION:
-- Analyse IMAGE 1's lighting: note the direction of natural light (windows), the warmth of the ambient light, and the direction shadows fall on the floor. Apply this exact same lighting to the furniture.
-- Add realistic floor contact shadows beneath each piece that match the shadow direction and softness already visible in IMAGE 1.
-- The furniture should look fully grounded in the room — not floating, not pasted on.
-- If the floor has a sheen or reflection, show a subtle reflection of the furniture legs.
+━━━ PLACEMENT ━━━
 
-FABRIC: The fabric color, pattern, and texture must remain identical to IMAGE 2. Lighting effects (highlights, shadows cast by the room's light) should appear on top of the fabric naturally, but do not change the underlying fabric design or color.
+CASE A — IMAGE 1 already has a sofa or chair:
+Replace each matching piece (sofa → sofa, chair → chair) with the corresponding piece from IMAGE 2 in the EXACT same position, angle, depth, and floor footprint as the original. The replacement must be identical in pose and placement to what it replaced.
 
-ROOM:
-- Remove any existing moveable furniture from IMAGE 1 (sofas, chairs, tables, rugs, floor lamps, cushions). Keep all permanent architecture: walls, floor, ceiling, windows, fireplace, wall art, built-in shelving.
-- Do not alter the room's colors, lighting, or style in any way.
-- Do not add any objects beyond what is shown in IMAGE 2 — no coffee table, no plants, no rug, no decorations.
+CASE B — IMAGE 1 has no sofa or chair:
+Place the sofa as the primary piece facing the camera, with the accent chair angled toward it. Use real-world scale: sofa ~200–230 cm wide, chair ~70–80 cm wide. Position them naturally in the available floor space.
 
-OUTPUT: One photorealistic image that looks like a professional interior design photograph of IMAGE 1's room with IMAGE 2's furniture seamlessly integrated into it.`;
+In all cases: remove only the furniture being replaced. Keep all permanent architecture (walls, floor, ceiling, windows, fireplace, built-in shelving, wall art). Add no extra objects not in IMAGE 2.
+
+━━━ PHOTOREALISM — APPLY ALL OF THESE ━━━
+
+LIGHTING:
+- Analyse IMAGE 1 carefully: identify every light source (windows, ceiling lights, lamps), the direction, colour temperature, and intensity of each.
+- Re-light the furniture from IMAGE 2 under this exact same lighting. If IMAGE 1 has warm sunlight coming from the left window, the furniture must have warm highlights on its left faces and cooler shadow on its right faces.
+- Match the white balance and colour cast of IMAGE 1 exactly — if the room is warm (3000K), the furniture should carry the same warmth; if cool (6500K daylight), match that.
+
+SHADOWS:
+- Cast realistic directional shadows from the furniture onto the floor. The shadow direction, length, and softness must exactly match the shadows of other objects already in IMAGE 1.
+- Add tight, dark ambient occlusion where the furniture base/legs meet the floor — this is the most important grounding element.
+- If there are multiple light sources, the furniture casts multiple overlapping shadows, just like everything else in the room.
+
+PERSPECTIVE & GEOMETRY:
+- The furniture must align perfectly with the room's perspective grid — vanishing points, horizon line, floor plane. A sofa that appears to defy the room's perspective immediately reads as fake.
+- The furniture must sit flat on the floor plane — no floating, no sinking.
+- Match the apparent focal length / lens perspective of IMAGE 1.
+
+SURFACE INTERACTION:
+- If the floor is shiny hardwood or polished tile, show a subtle, blurred reflection of the furniture underside in the floor surface.
+- If the floor has texture (carpet, wood grain), the furniture legs should compress or interact with it slightly.
+- The furniture should show subtle bounce light from the floor and nearby walls — coloured by the room's dominant surface colours.
+
+FABRIC & MATERIAL:
+- The fabric color, pattern, texture, and weave from IMAGE 2 must be preserved exactly — this is the user's custom design and must not change.
+- Apply lighting effects on top of the fabric (directional shading, specular highlights on shiny threads, soft shadow in folds) but do not alter the underlying pattern or colour.
+
+PHOTO CHARACTERISTICS:
+- Match the grain/noise level of IMAGE 1 across the composited furniture.
+- If IMAGE 1 has any chromatic aberration, slight vignette, or lens sharpness falloff, apply the same to the composited area.
+- The composited area should have identical sharpness, contrast, and saturation to the surrounding real photo — no artificially clean or over-sharpened areas.
+
+FINAL CHECK (apply before output):
+- Zoom into the floor contact area — are the shadows correct and the base grounded?
+- Check the furniture highlights against the window positions — do they match?
+- Is there any halo, hard edge, or colour fringe around the furniture silhouette? Remove it.
+- Does the furniture read as part of the original photograph, or as a paste-in? It must read as part of the photograph.
+
+OUTPUT: One single photorealistic image — impossible to distinguish from a real interior photograph taken with this furniture in the room.`;
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
