@@ -103,6 +103,35 @@ function deselectAll() {
 }
 
 // ── GLB Processing ────────────────────────────────────────────────────────
+// Shared mesh classification for processGLTF + _rebuildMeshEntries: KNOWN-part
+// name walk up the node tree, then the bed pillow/mattress/frame heuristic.
+// Returns '' when unclassified (non-bed unnamed meshes) — each caller applies
+// its own mode-specific fallback (positional heuristic vs raw mesh name).
+function classifyMesh(mesh, modelKey, worldCenter, worldSize) {
+  const KNOWN={
+    'wooden frame':'Frame','fabric frame':'Frame','bed frame':'Frame','frame':'Frame',
+    'headboard':'Frame','footboard':'Frame','bed base':'Frame','slat':'Frame','legs':'Frame',
+    'mattress':'Mattress','bed mattress':'Mattress','victorian_bed_mattres':'Mattress','victorian_bed_mattress':'Mattress',
+    'pillow':'Pillow','pillow_01':'Pillow','pillow_02':'Pillow','pillows':'Pillows','cushion':'Pillow',
+    'seat cushion':'Seat Cushion','back cushion':'Back Cushion',
+  };
+  let _n=mesh;
+  while(_n){const k=(_n.name||'').trim().toLowerCase();if(KNOWN[k])return KNOWN[k];_n=_n.parent;}
+
+  if(modelKey!=='bed_wooden'&&modelKey!=='bed_fabric') return '';
+  const meshBox=new THREE.Box3().setFromObject(mesh);
+  const mc=meshBox.getCenter(new THREE.Vector3());
+  const ms=meshBox.getSize(new THREE.Vector3());
+  const relY=(mc.y-worldCenter.y)/(worldSize.y*0.5||1);
+  const meshVol=ms.x*ms.y*ms.z,worldVol=worldSize.x*worldSize.y*worldSize.z;
+  const volRatio=worldVol>0?meshVol/worldVol:0;
+  const dims=[ms.x,ms.y,ms.z].sort((a,b)=>a-b);
+  const flatness=dims[2]>0?dims[0]/dims[2]:1;
+  if(volRatio<0.03&&relY>0.0) return 'Pillow';
+  if(flatness<0.22&&ms.x*ms.z>(worldSize.x*worldSize.z*0.2)) return 'Mattress';
+  return 'Frame';
+}
+
 function processGLTF(gltf) {
   try {
     // Guard: room mode caller manages scene membership
@@ -159,16 +188,7 @@ function processGLTF(gltf) {
         origMat._livinitGrey = greyMat; // so _rebuildMeshEntries reuses this mat (with any applied fabric)
         greyMat._livinitGrey = greyMat; // self-ref: mesh.material == greyMat after processGLTF, so _rebuildMeshEntries finds it here
 
-        const KNOWN={
-          'wooden frame':'Frame','fabric frame':'Frame','bed frame':'Frame','frame':'Frame',
-          'headboard':'Frame','footboard':'Frame','bed base':'Frame','slat':'Frame','legs':'Frame',
-          'mattress':'Mattress','bed mattress':'Mattress','victorian_bed_mattres':'Mattress','victorian_bed_mattress':'Mattress',
-          'pillow':'Pillow','pillow_01':'Pillow','pillow_02':'Pillow','pillows':'Pillows','cushion':'Pillow',
-          'seat cushion':'Seat Cushion','back cushion':'Back Cushion',
-        };
-        let cleanName='';
-        let _n=mesh;
-        while(_n){const k=(_n.name||'').trim().toLowerCase();if(KNOWN[k]){cleanName=KNOWN[k];break;}_n=_n.parent;}
+        let cleanName=classifyMesh(mesh, appStore.getState().currentModelKey, worldCenter, worldSize);
 
         mesh.geometry.computeBoundingBox();
         const meshBox=new THREE.Box3().setFromObject(mesh);
@@ -181,23 +201,17 @@ function processGLTF(gltf) {
         const flatness=dims[2]>0?dims[0]/dims[2]:1;
         const meshVol=ms.x*ms.y*ms.z,worldVol=ws.x*ws.y*ws.z,volRatio=worldVol>0?meshVol/worldVol:0;
 
-        const isBed = appStore.getState().currentModelKey==='bed_wooden'||appStore.getState().currentModelKey==='bed_fabric';
         if(!cleanName){
-          if(isBed){
-            if(volRatio<0.03&&relY>0.0) cleanName='Pillow';
-            else if(flatness<0.22&&ms.x*ms.z>(ws.x*ws.z*0.2)) cleanName='Mattress';
-            else cleanName='Frame';
-          } else {
-            if(relY<-0.55) cleanName='Legs / Base';
-            else if(relZ<-0.35&&relY>-0.3) cleanName='Backrest';
-            else if(absX>0.55&&relY>-0.4) cleanName=relX>0?'Right Armrest':'Left Armrest';
-            else if(relZ>0.0&&relY>-0.3&&relY<0.4&&absX<0.5) cleanName='Seat Cushion';
-            else if(flatness<0.06||volRatio<0.0008) cleanName='Stitching';
-            else if(relY<-0.35&&volRatio<0.02) cleanName='Legs / Base';
-            else if(volRatio>0.12) cleanName='Main Body';
-            else if(relY>-0.1&&relY<0.55&&absX<0.55) cleanName='Body Panel';
-            else cleanName='Frame';
-          }
+          // Positional heuristic for unnamed chair/sofa parts (bed handled in classifyMesh)
+          if(relY<-0.55) cleanName='Legs / Base';
+          else if(relZ<-0.35&&relY>-0.3) cleanName='Backrest';
+          else if(absX>0.55&&relY>-0.4) cleanName=relX>0?'Right Armrest':'Left Armrest';
+          else if(relZ>0.0&&relY>-0.3&&relY<0.4&&absX<0.5) cleanName='Seat Cushion';
+          else if(flatness<0.06||volRatio<0.0008) cleanName='Stitching';
+          else if(relY<-0.35&&volRatio<0.02) cleanName='Legs / Base';
+          else if(volRatio>0.12) cleanName='Main Body';
+          else if(relY>-0.1&&relY<0.55&&absX<0.55) cleanName='Body Panel';
+          else cleanName='Frame';
         }
 
         // Copy UV1 → UV2 for aoMap support (Three.js requires uv2 channel for aoMap)
@@ -438,38 +452,10 @@ function _rebuildMeshEntries(model, modelKey) {
       // regardless of slotScale. _seatOnFloor stores _baseScale when slotScale != 1.0.
       if (model._baseScale && model.scale.x > 0) maxDim *= (model._baseScale.x / model.scale.x);
 
-      // Name from node name
-      const KNOWN = {
-        'wooden frame':'Frame','fabric frame':'Frame','bed frame':'Frame','frame':'Frame',
-        'headboard':'Frame','footboard':'Frame','bed base':'Frame','slat':'Frame','legs':'Frame',
-        'mattress':'Mattress','bed mattress':'Mattress','victorian_bed_mattres':'Mattress','victorian_bed_mattress':'Mattress',
-        'pillow':'Pillow','pillow_01':'Pillow','pillow_02':'Pillow','pillows':'Pillows','cushion':'Pillow',
-        'seat cushion':'Seat Cushion','back cushion':'Back Cushion',
-      };
-      let cleanName = '';
-      let _n = mesh;
-      while(_n){ const k=(_n.name||'').trim().toLowerCase(); if(KNOWN[k]){cleanName=KNOWN[k];break;} _n=_n.parent; }
-      if(!cleanName){
-        const isBed = modelKey==='bed_wooden'||modelKey==='bed_fabric';
-        if(isBed){
-          const mb=new THREE.Box3().setFromObject(mesh);
-          const ms2=mb.getSize(new THREE.Vector3());
-          const mc2=mb.getCenter(new THREE.Vector3());
-          const wb=new THREE.Box3().setFromObject(model);
-          const ws2=wb.getSize(new THREE.Vector3());
-          const wc2=wb.getCenter(new THREE.Vector3());
-          const relY2=(mc2.y-wc2.y)/(ws2.y*0.5||1);
-          const mv=ms2.x*ms2.y*ms2.z,wv=ws2.x*ws2.y*ws2.z;
-          const vr=wv>0?mv/wv:0;
-          const d2=[ms2.x,ms2.y,ms2.z].sort((a,b)=>a-b);
-          const fl=d2[2]>0?d2[0]/d2[2]:1;
-          if(vr<0.03&&relY2>0.0) cleanName='Pillow';
-          else if(fl<0.22&&ms2.x*ms2.z>(ws2.x*ws2.z*0.2)) cleanName='Mattress';
-          else cleanName='Frame';
-        } else {
-          cleanName = mesh.name || `Part ${meshCounter+1}`;
-        }
-      }
+      // Name from node name (shared walk + bed heuristic), else raw mesh name —
+      // room-mode rebuilds deliberately skip the positional chair/sofa heuristic.
+      let cleanName = classifyMesh(mesh, modelKey, worldCenter, worldSize);
+      if(!cleanName) cleanName = mesh.name || `Part ${meshCounter+1}`;
 
       // Apply greyMat — preserve single vs array form to avoid geometry-group rendering issues
       if (isMaterialArray) {
