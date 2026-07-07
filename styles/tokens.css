@@ -1,0 +1,30 @@
+/* Design tokens — single source of truth for color/type/spacing/radius.
+   Component CSS must consume var(--...) instead of raw values. */
+:root{
+  --bg:#F8F9FA; --surface:#FFFFFF; --panel:#FFFFFF;
+  --border:#E9ECEF; --border-strong:#CED4DA;
+  --text:#111827; --text-mid:#6B7280; --text-muted:#9CA3AF;
+  --accent:#7C3AED; --accent-hover:#6D28D9; --accent-light:#6D28D9;
+  --accent-pale:#EDE9FE;
+  --green:#10B981; --yellow:#F59E0B;
+  /* legacy compat */
+  --warm:#4361EE; --warm-light:#BAC8FF;
+  /* extended accent palette */
+  --accent-deep:#5B21B6; --accent-bright:#A855F7;
+  --purple-300:#C4B5FD; --purple-100:#F0EEFF; --purple-50:#FAF9FF;
+  /* ink tonal scale */
+  --ink-900:#0B0A18; --ink-600:#52516A; --ink-400:#6B6888;
+  --surface-tint:#F5F4F8; --border-soft:#F3F2F8; --border-dot:#E4E2F0;
+  /* info blue for tags/badges */
+  --info:#1D4ED8; --info-bg:#EFF6FF; --info-border:#93C5FD;
+  --font-b:'DM Sans','Enrique',system-ui,sans-serif;
+  --font-d:'Plus Jakarta Sans','Agrandir Grand',system-ui,sans-serif;
+  /* type scale — use these, not raw px (fractional legacy sizes pending normalization) */
+  --fs-3xs:8px; --fs-2xs:9px; --fs-xs:10px; --fs-sm:11px;
+  --fs-md:12px; --fs-base:13px; --fs-lg:15px; --fs-xl:18px;
+  /* spacing scale */
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px; --space-6:24px;
+  --r:6px; --r-lg:8px; /* --r-lg was 10px but never referenced; 8px matches the 20 hard-coded uses it now replaces */
+  --sidebar-w:72px; --topbar-h:56px; --strip-h:60px;
+  --fabric-h:126px; --config-w:292px;
+}
