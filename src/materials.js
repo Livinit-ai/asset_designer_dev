@@ -116,9 +116,7 @@ async function applySwatchToEntries(item, targetEntries) {
       });
       markDirty(); showToast(item.name+' applied!');
       // Auto-save material snapshot so room view retains changes
-      modelMaterialSnapshots[currentModelKey] = meshEntries.map(e => ({
-        id: e.id, name: e.name, matClone: e.greyMat.clone(),
-      }));
+      saveMaterialSnapshot();
       return;
     }
 
@@ -219,9 +217,7 @@ async function applySwatchToEntries(item, targetEntries) {
     });
     markDirty(); showToast(item.name+' applied!');
     // Auto-save material snapshot so room view retains changes
-    modelMaterialSnapshots[currentModelKey] = meshEntries.map(e => ({
-      id: e.id, name: e.name, matClone: e.greyMat.clone(),
-    }));
+    saveMaterialSnapshot();
   } catch(e) {
     console.error(e); showToast('Failed to apply material');
   } finally {
@@ -423,9 +419,7 @@ async function handleDiffuseUpload(file) {
 
   markDirty();
   showToast('Seamless texture applied!');
-  modelMaterialSnapshots[currentModelKey] = meshEntries.map(e => ({
-    id: e.id, name: e.name, matClone: e.greyMat.clone(),
-  }));
+  saveMaterialSnapshot();
 }
 
 // ── Drag & Drop ────────────────────────────────────────────────────────────

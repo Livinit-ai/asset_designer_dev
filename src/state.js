@@ -251,3 +251,10 @@ async function getPolyMaps(polyId) {
   }
 }
 
+// Save the current model's materials so room view / model switching restores them.
+// Single implementation — was copy-pasted at five call sites.
+function saveMaterialSnapshot() {
+  modelMaterialSnapshots[currentModelKey] = meshEntries.map(e => ({
+    id: e.id, name: e.name, matClone: e.greyMat.clone(),
+  }));
+}

@@ -309,9 +309,7 @@ function loadModel(url) {
 function switchModel(key) {
   // ── 1. Save snapshot of current model before switching ─────────────────
   if (meshEntries.length > 0) {
-    modelMaterialSnapshots[currentModelKey] = meshEntries.map(e => ({
-      id: e.id, name: e.name, matClone: e.greyMat.clone(),
-    }));
+    saveMaterialSnapshot();
   }
 
   const prevKey = currentModelKey;

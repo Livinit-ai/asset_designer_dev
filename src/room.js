@@ -21,9 +21,7 @@ function toggleRoomView() {
   if(roomMode) {
     // Save snapshot of current model's fabric state before entering room
     if (meshEntries.length > 0) {
-      modelMaterialSnapshots[currentModelKey] = meshEntries.map(e => ({
-        id: e.id, name: e.name, matClone: e.greyMat.clone(),
-      }));
+      saveMaterialSnapshot();
     }
     // Auto-select room section based on furniture type
     const _enterBed = currentModelKey === 'bed_wooden' || currentModelKey === 'bed_fabric';
