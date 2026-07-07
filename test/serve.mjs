@@ -9,6 +9,10 @@ import { extname, join, normalize } from 'node:path';
 const PORT = Number(process.argv[2]) || 8123;
 const ROOT = new URL('..', import.meta.url).pathname;
 const UPSTREAM = 'https://asset-designer-dev.vercel.app';
+// The Vercel s3proxy function just streams this public bucket (api/s3proxy.ts
+// prepends 'fabric_assets/'). Falling back to it directly keeps asset-dependent
+// tests running when the Vercel deployment is paused (402).
+const S3_DIRECT = 'https://livinit-storage-prod.s3.us-east-2.amazonaws.com/fabric_assets/';
 const CACHE = join(ROOT, 'test', '.asset-cache');
 await mkdir(CACHE, { recursive: true });
 const cachePath = (u) => join(CACHE, createHash('sha1').update(u).digest('hex'));
@@ -36,12 +40,15 @@ http.createServer(async (req, res) => {
           return res.end(body);
         } catch { /* cache miss */ }
       }
-      const upstream = await fetch(UPSTREAM + req.url, {
+      let upstream = await fetch(UPSTREAM + req.url, {
         method: req.method,
         headers: { 'content-type': req.headers['content-type'] || '' },
         body: ['GET', 'HEAD'].includes(req.method) ? undefined : req,
         duplex: 'half',
       });
+      if (cacheable && !upstream.ok && url.searchParams.get('key')) {
+        upstream = await fetch(S3_DIRECT + url.searchParams.get('key'));
+      }
       const type = upstream.headers.get('content-type') || 'application/octet-stream';
       if (cacheable && upstream.ok) {
         const buf = Buffer.from(await upstream.arrayBuffer());
