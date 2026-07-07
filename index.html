@@ -226,46 +226,13 @@
             <div class="cp-section-hdr">
               <span class="cp-section-title">Applied Fabric</span>
             </div>
-            <div class="app-prev">
-              <div class="app-sw" id="app-sw"></div>
-              <div style="flex:1;min-width:0">
-                <div class="app-name" id="app-name">— none selected —</div>
-                <div class="app-vend" id="app-vend"></div>
-              </div>
-              <button class="app-replace-btn" id="app-replace-btn" title="Replace with your own image" onclick="openDiffuseUpload()" style="display:none">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-              </button>
-            </div>
+            <!-- .app-prev rendered by src/panels.js -->
             <input type="file" id="diffuse-upload-input" accept="image/*" style="display:none">
           </div>
 
-          <!-- Material adjustments -->
-          <div class="cp-section">
+          <!-- Material adjustments (.sl-row rows rendered by src/panels.js) -->
+          <div class="cp-section" id="cp-sliders">
             <div class="cp-section-hdr"><span class="cp-section-title">Material Adjustments</span></div>
-            <div class="sl-row">
-              <div class="sl-lbl">Brightness <span class="sl-val" id="v-brightness">1.00</span></div>
-              <input type="range" id="s-brightness" min="0.01" max="2" step="0.05" value="1" oninput="updateBrightness(+this.value)">
-            </div>
-            <div class="sl-row">
-              <div class="sl-lbl">Roughness <span class="sl-val" id="v-roughness">0.72</span></div>
-              <input type="range" id="s-roughness" min="0" max="1" step="0.01" value="0.72" oninput="applyProp('roughness',+this.value)">
-            </div>
-            <div class="sl-row">
-              <div class="sl-lbl">Metalness <span class="sl-val" id="v-metalness">0.00</span></div>
-              <input type="range" id="s-metalness" min="0" max="1" step="0.01" value="0" oninput="applyProp('metalness',+this.value)">
-            </div>
-            <div class="sl-row">
-              <div class="sl-lbl">Fabric Fuzz <span class="sl-val" id="v-sheen">0.00</span></div>
-              <input type="range" id="s-sheen" min="0" max="1" step="0.01" value="0" oninput="applyProp('sheen',+this.value)">
-            </div>
-            <div class="sl-row">
-              <div class="sl-lbl">Pattern Scale <span class="sl-val" id="v-scale">10.0</span></div>
-              <input type="range" id="s-scale" min="0.5" max="20" step="0.1" value="10" oninput="updateTexScale(+this.value)">
-            </div>
-            <div class="sl-row" style="margin-bottom:0">
-              <div class="sl-lbl">Bump Strength <span class="sl-val" id="v-norm">1.0</span></div>
-              <input type="range" id="s-norm" min="0" max="3" step="0.1" value="1" oninput="updateNormScale(+this.value)">
-            </div>
           </div>
 
           <!-- Footer CTA -->
@@ -404,40 +371,20 @@
             <div id="piece-list"></div>
           </div>
 
-          <div class="room-section-block">
+          <div class="room-section-block" id="room-applied-block">
             <div class="room-section-label">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
               Applied Material
             </div>
-            <div class="app-prev">
-              <div class="app-sw" id="app-sw-room" style="width:40px;height:40px;border-radius:6px"></div>
-              <div style="flex:1;min-width:0">
-                <div class="app-name" id="app-name-room">— none selected —</div>
-                <div class="app-vend" id="app-vend-room"></div>
-              </div>
-              <button class="app-replace-btn" id="app-replace-btn-room" title="Replace with your own image" onclick="openDiffuseUpload()" style="display:none">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
-              </button>
-            </div>
+            <!-- .app-prev rendered by src/panels.js -->
           </div>
 
-          <div class="room-section-block">
+          <div class="room-section-block" id="room-sliders-block">
             <div class="room-section-label">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
               Material Adjustments
             </div>
-            <div class="sl-row">
-              <div class="sl-lbl">Brightness <span class="sl-val" id="v-brightness-r">1.00</span></div>
-              <input type="range" id="s-brightness-r" min="0.01" max="2" step="0.05" value="1" oninput="updateBrightness(+this.value)">
-            </div>
-            <div class="sl-row">
-              <div class="sl-lbl">Roughness <span class="sl-val" id="v-roughness-r">0.72</span></div>
-              <input type="range" id="s-roughness-r" min="0" max="1" step="0.01" value="0.72" oninput="applyProp('roughness',+this.value)">
-            </div>
-            <div class="sl-row" style="margin-bottom:0">
-              <div class="sl-lbl">Pattern Scale <span class="sl-val" id="v-scale-r">10.0</span></div>
-              <input type="range" id="s-scale-r" min="0.5" max="20" step="0.1" value="10" oninput="updateTexScale(+this.value)">
-            </div>
+            <!-- .sl-row rows rendered by src/panels.js -->
           </div>
 
           <div style="padding:14px 16px 18px">
@@ -718,6 +665,7 @@
 <script src="src/actions.js"></script>
 <script src="src/catalog.js"></script>
 <script src="src/state.js"></script>
+<script src="src/panels.js"></script>
 <script src="src/materials.js"></script>
 <script src="src/model.js"></script>
 <script src="src/library.js"></script>
