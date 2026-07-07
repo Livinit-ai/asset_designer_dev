@@ -83,7 +83,13 @@ try {
   await page.evaluate(() => window._tourSkip?.()).catch(() => {});
 
   // Network-independent UI checks: library bar built from in-memory catalog,
-  // finder modal opens/closes, product tabs wired.
+  // finder modal opens/closes, product tabs wired. The library builds only
+  // after the CDN loader scripts finish, so wait for swatches instead of
+  // sampling at a fixed delay (was flaky under slow CDN).
+  await page.waitForFunction(
+    () => document.querySelectorAll('.bar-sw').length >= 50,
+    { timeout: 30000, polling: 500 },
+  ).catch(() => {});
   const uiOk = await page.evaluate(() => {
     const out = {};
     out.swatches = document.querySelectorAll('.bar-sw').length;
