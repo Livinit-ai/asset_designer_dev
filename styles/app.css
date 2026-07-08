@@ -93,6 +93,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 #drop-hint{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:rgb(var(--md-scrim) / .88);color:rgb(var(--md-on-primary));font-size:var(--fs-sm);letter-spacing:.04em;padding:7px 16px;border-radius:var(--r-full);pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap;backdrop-filter:blur(8px);z-index:22}
 #drop-hint.show{opacity:1}
 #loading{position:absolute;inset:0;background:rgb(var(--md-surface) / .85);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:24;opacity:0;pointer-events:none;transition:opacity .3s}
+/* When the overlay is hidden (no .on) its spinner/bar still animate invisibly —
+   pause them so an idle app does zero compositor work. Resume when shown. */
+#loading:not(.on) .spinner::after,#loading:not(.on) .load-bar-inner{animation-play-state:paused}
 #loading.on{opacity:1;pointer-events:all}
 #load-txt{font-size:var(--fs-base);line-height:20px;font-weight:600;color:rgb(var(--md-on-surface))}
 .spinner{width:32px;height:32px;border:none;position:relative;margin-bottom:10px;animation:none}
@@ -290,7 +293,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
 .mhud-rot-row{display:flex;gap:6px}
 .mhud-rot-btn{width:44px;height:44px;border-radius:var(--r-sm);font-size:20px;line-height:1}
 .mhud-hint{font-size:var(--fs-2xs);color:var(--text-muted);margin-top:2px}
-.bar-sw{display:flex;flex-direction:column;gap:3px;cursor:pointer;min-width:0}
+.bar-sw{display:flex;flex-direction:column;gap:3px;cursor:pointer;min-width:0;content-visibility:auto;contain-intrinsic-size:auto 132px}
 .bar-sw-img{width:100%;aspect-ratio:1;border-radius:var(--r-md);overflow:hidden;border:2px solid transparent;background:rgb(var(--md-surface-container));transition:all var(--dur-fast) var(--ease-motion);display:flex;align-items:center;justify-content:center}
 .bar-sw-img img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
 .bar-sw:hover .bar-sw-img{border-color:rgb(var(--md-outline));transform:scale(1.04)}
