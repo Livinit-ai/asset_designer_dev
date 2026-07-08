@@ -6,8 +6,8 @@ const dotColors = ['#c84040','#c87840','#c8c840','#40c870','#4070c8','#8040c8','
 function buildMeshList() {
   const list = document.getElementById('mesh-list');
   list.innerHTML = '';
-  if(!meshEntries.length) { list.innerHTML='<div style="font-size:11px;color:var(--text-muted)">No parts found</div>'; return; }
-  meshEntries.forEach((entry,i) => {
+  if(!E.meshEntries.length) { list.innerHTML='<div style="font-size:11px;color:var(--text-muted)">No parts found</div>'; return; }
+  E.meshEntries.forEach((entry,i) => {
     const dot = dotColors[i%dotColors.length];
     const row = document.createElement('label');
     row.className = 'mesh-item'+(entry.checked?' sel':'');
@@ -29,11 +29,11 @@ function buildMeshList() {
 function buildPieceList() {
   const list = document.getElementById('piece-list');
   list.innerHTML = '';
-  if(!meshEntries.length) { list.innerHTML='<div style="font-size:11px;color:var(--text-muted)">No parts loaded</div>'; return; }
+  if(!E.meshEntries.length) { list.innerHTML='<div style="font-size:11px;color:var(--text-muted)">No parts loaded</div>'; return; }
 
   // Separate curtain entry from furniture entries
-  const curtainEntry = meshEntries.find(e => e._isCurtain);
-  const furnitureEntries = meshEntries.filter(e => !e._isCurtain);
+  const curtainEntry = E.meshEntries.find(e => e._isCurtain);
+  const furnitureEntries = E.meshEntries.filter(e => !e._isCurtain);
 
   furnitureEntries.forEach((entry,i) => {
     const dot = dotColors[i%dotColors.length];
@@ -45,7 +45,7 @@ function buildPieceList() {
     const arrow=document.createElement('span'); arrow.className='piece-item-arrow'; arrow.textContent='›';
     row.appendChild(dotEl); row.appendChild(txt); row.appendChild(arrow);
     row.addEventListener('click',()=>{
-      meshEntries.forEach(e=>{ e.pieceSelected=false; });
+      E.meshEntries.forEach(e=>{ e.pieceSelected=false; });
       entry.pieceSelected = true;
       buildPieceList();
       buildLibrary();
@@ -73,7 +73,7 @@ function buildPieceList() {
     const hint = document.createElement('span'); hint.style.cssText='font-size:9px;color:var(--text-muted)'; hint.textContent='select → pick swatch';
     row.appendChild(ico); row.appendChild(lbl); row.appendChild(hint);
     row.addEventListener('click', () => {
-      meshEntries.forEach(e => { e.pieceSelected = false; });
+      E.meshEntries.forEach(e => { e.pieceSelected = false; });
       curtainEntry.pieceSelected = true;
       buildPieceList();
       buildLibrary();
@@ -84,7 +84,7 @@ function buildPieceList() {
 }
 
 function toggleCheck(id, checked) {
-  meshEntries = meshEntries.map(entry => {
+  E.meshEntries = E.meshEntries.map(entry => {
     if(entry.id!==id) return entry;
     const ne={...entry, checked};
     const matArr=Array.isArray(ne.mesh.material)?[...ne.mesh.material]:[ne.mesh.material];
@@ -95,11 +95,11 @@ function toggleCheck(id, checked) {
   buildMeshList(); markDirty();
 }
 function selectAll() {
-  meshEntries.forEach(entry=>{ entry.checked=true; if(Array.isArray(entry.mesh.material)){const a=[...entry.mesh.material];if(entry.matIndex>=0&&entry.matIndex<a.length){a[entry.matIndex]=entry.greyMat;entry.mesh.material=a;}}else{entry.mesh.material=entry.greyMat;} });
+  E.meshEntries.forEach(entry=>{ entry.checked=true; if(Array.isArray(entry.mesh.material)){const a=[...entry.mesh.material];if(entry.matIndex>=0&&entry.matIndex<a.length){a[entry.matIndex]=entry.greyMat;entry.mesh.material=a;}}else{entry.mesh.material=entry.greyMat;} });
   buildMeshList(); markDirty(); _refreshZoneLabelStates();
 }
 function deselectAll() {
-  meshEntries.forEach(entry=>{ entry.checked=false; if(Array.isArray(entry.mesh.material)){const a=[...entry.mesh.material];if(entry.matIndex>=0&&entry.matIndex<a.length){a[entry.matIndex]=entry.origMat;entry.mesh.material=a;}}else{entry.mesh.material=entry.origMat;} });
+  E.meshEntries.forEach(entry=>{ entry.checked=false; if(Array.isArray(entry.mesh.material)){const a=[...entry.mesh.material];if(entry.matIndex>=0&&entry.matIndex<a.length){a[entry.matIndex]=entry.origMat;entry.mesh.material=a;}}else{entry.mesh.material=entry.origMat;} });
   buildMeshList(); markDirty(); _refreshZoneLabelStates();
 }
 
@@ -135,27 +135,27 @@ function classifyMesh(mesh, modelKey, worldCenter, worldSize) {
 
 function processGLTF(gltf) {
   try {
-    // Guard: room mode caller manages scene membership
-    if (!appStore.getState().roomMode && currentModel) scene.remove(currentModel);
-    currentModel = gltf.scene;
-    const box = new THREE.Box3().setFromObject(currentModel);
+    // Guard: room mode caller manages E.scene membership
+    if (!appStore.getState().roomMode && E.currentModel) E.scene.remove(E.currentModel);
+    E.currentModel = gltf.scene;
+    const box = new THREE.Box3().setFromObject(E.currentModel);
     const sz = box.getSize(new THREE.Vector3());
-    currentModel.scale.setScalar(1.6 / Math.max(sz.x, sz.y, sz.z));
-    const box2 = new THREE.Box3().setFromObject(currentModel);
+    E.currentModel.scale.setScalar(1.6 / Math.max(sz.x, sz.y, sz.z));
+    const box2 = new THREE.Box3().setFromObject(E.currentModel);
     const ctr = box2.getCenter(new THREE.Vector3());
-    currentModel.position.sub(ctr);
-    currentModel.updateMatrixWorld(true);
+    E.currentModel.position.sub(ctr);
+    E.currentModel.updateMatrixWorld(true);
 
-    // Always add to scene (room mode will reposition via _placeFurnitureInRoom)
-    scene.add(currentModel);
-    const worldBox = new THREE.Box3().setFromObject(currentModel);
+    // Always add to E.scene (room mode will reposition via _placeFurnitureInRoom)
+    E.scene.add(E.currentModel);
+    const worldBox = new THREE.Box3().setFromObject(E.currentModel);
     const worldCenter = worldBox.getCenter(new THREE.Vector3());
     const worldSize   = worldBox.getSize(new THREE.Vector3());
 
     const newEntries = [];
     let meshCounter = 0;
 
-    currentModel.traverse(child => {
+    E.currentModel.traverse(child => {
       if(!child.isMesh) return;
       const mesh = child;
       let materials;
@@ -240,22 +240,22 @@ function processGLTF(gltf) {
     const remap=RENAME[appStore.getState().currentModelKey]||{};
     newEntries.forEach(e=>{if(remap[e.name])e.name=remap[e.name];});
 
-    meshEntries = newEntries;
+    E.meshEntries = newEntries;
     buildMeshList();
     buildPieceList();
     rebuildZoneOverlay();
     updateProductInfo();
 
     if(!appStore.getState().roomMode){
-      sph={theta:0.4,phi:1.15,r:2.2}; tgt.set(0,0,0); camUpdate();
+      E.sph={theta:0.4,phi:1.15,r:2.2}; E.tgt.set(0,0,0); camUpdate();
     }
-    // Room mode: camera stays, _placeFurnitureInRoom sets positions
+    // Room mode: E.camera stays, _placeFurnitureInRoom sets positions
     // Restore previously saved material snapshot for this model key
     const snap = modelMaterialSnapshots[appStore.getState().currentModelKey];
     if(snap && snap.length > 0) {
       snap.forEach((s, si) => {
-        if(si < meshEntries.length) {
-          const entry = meshEntries[si];
+        if(si < E.meshEntries.length) {
+          const entry = E.meshEntries[si];
           // Copy all material properties from snapshot
           const src = s.matClone;
           entry.greyMat.color.copy(src.color);
@@ -294,7 +294,7 @@ function loadModel(url) {
   document.getElementById('loading').classList.add('on');
   document.getElementById('load-txt').textContent = 'Loading…';
   document.getElementById('v-hint').style.display='none';
-  meshEntries=[];
+  E.meshEntries=[];
   setActiveFabric(null); renderActiveSwatch();
   // Reset BOTH the product and room applied-preview variants — materials.js
   // writes both via ['','room'], so reset must clear both or the room panel
@@ -310,15 +310,15 @@ function loadModel(url) {
   if (_gltfSceneCache[url]) {
     // Cache hit — clone so processGLTF gets a fresh unmodified hierarchy
     processGLTF({ scene: _gltfSceneCache[url].clone(true) });
-    roomFurnitureModels[appStore.getState().currentModelKey] = currentModel;
+    roomFurnitureModels[appStore.getState().currentModelKey] = E.currentModel;
     return;
   }
 
-  gltfLoader.load(url, gltf => {
+  E.gltfLoader.load(url, gltf => {
     // Store a pre-process clone so subsequent loads skip the download + re-parse
     _gltfSceneCache[url] = gltf.scene.clone(true);
     processGLTF(gltf);
-    roomFurnitureModels[appStore.getState().currentModelKey] = currentModel;
+    roomFurnitureModels[appStore.getState().currentModelKey] = E.currentModel;
   }, undefined, err=>{
     console.error(err);
     document.getElementById('loading').classList.remove('on');
@@ -328,7 +328,7 @@ function loadModel(url) {
 
 function switchModel(key) {
   // ── 1. Save snapshot of current model before switching ─────────────────
-  if (meshEntries.length > 0) {
+  if (E.meshEntries.length > 0) {
     saveMaterialSnapshot();
   }
 
@@ -350,69 +350,69 @@ function switchModel(key) {
   if (appStore.getState().roomMode) _syncRoomSectionLock();
 
   if (appStore.getState().roomMode) {
-    // ── Room mode: both models stay in scene, just swap which is "active" ──
+    // ── Room mode: both models stay in E.scene, just swap which is "active" ──
     const cached = roomFurnitureModels[key];
     if (cached) {
-      if (currentModel) roomFurnitureModels[prevKey] = currentModel;
-      currentModel = cached;
-      // Ensure the newly-active model is in scene — preload and companion load can
+      if (E.currentModel) roomFurnitureModels[prevKey] = E.currentModel;
+      E.currentModel = cached;
+      // Ensure the newly-active model is in E.scene — preload and companion load can
       // produce different object instances, causing the cached ref to be orphaned.
-      if (!scene.getObjectById(currentModel.id)) {
-        scene.add(currentModel);
+      if (!E.scene.getObjectById(E.currentModel.id)) {
+        E.scene.add(E.currentModel);
         const _ks = (appStore.getState().activeRoomSection === 'bedroom' && BEDROOM_SLOTS[key]) ? BEDROOM_SLOTS : FURNITURE_SLOTS;
         const s = _ks[key];
-        if (s) _seatOnFloor(currentModel, s.x, s.z, s.rotY, s.scale || 1.0);
+        if (s) _seatOnFloor(E.currentModel, s.x, s.z, s.rotY, s.scale || 1.0);
       }
       // Companion behaviour: living room keeps both pieces visible; bedroom shows only the active bed
       if (prevKey && roomFurnitureModels[prevKey]) {
         const prevModel = roomFurnitureModels[prevKey];
         if (appStore.getState().activeRoomSection === 'bedroom') {
-          scene.remove(prevModel);
-        } else if (!scene.getObjectById(prevModel.id)) {
-          scene.add(prevModel);
+          E.scene.remove(prevModel);
+        } else if (!E.scene.getObjectById(prevModel.id)) {
+          E.scene.add(prevModel);
           const ps = FURNITURE_SLOTS[prevKey];
           if (ps) _seatOnFloor(prevModel, ps.x, ps.z, ps.rotY, ps.scale || 1.0);
         }
       }
-      meshEntries = [];
-      _rebuildMeshEntries(currentModel, key);
+      E.meshEntries = [];
+      _rebuildMeshEntries(E.currentModel, key);
       buildMeshList();
       buildPieceList();
-      _applySnapshotToModel(currentModel, key);
+      _applySnapshotToModel(E.currentModel, key);
       markDirty();
     } else {
       // Not cached yet — load fresh (avoid calling processGLTF in room mode;
-      // it would re-centre the model and clobber meshEntries/curtain entries)
+      // it would re-centre the model and clobber E.meshEntries/curtain entries)
       const url = getGLBUrl(key);
       document.getElementById('loading').classList.add('on');
       document.getElementById('load-txt').textContent = 'Loading…';
-      gltfLoader.load(url, gltf => {
-        // Remove any stale scene instance for this key before adding the new one
+      E.gltfLoader.load(url, gltf => {
+        // Remove any stale E.scene instance for this key before adding the new one
         if (roomFurnitureModels[key]) {
-          scene.remove(roomFurnitureModels[key]);
+          E.scene.remove(roomFurnitureModels[key]);
           roomFurnitureModels[key] = null;
         }
-        if (currentModel) {
-          roomFurnitureModels[prevKey] = currentModel;
+        if (E.currentModel) {
+          roomFurnitureModels[prevKey] = E.currentModel;
           // In bedroom mode only one bed is shown — remove the old one before adding new
-          if (appStore.getState().activeRoomSection === 'bedroom') scene.remove(currentModel);
+          if (appStore.getState().activeRoomSection === 'bedroom') E.scene.remove(E.currentModel);
         }
-        currentModel = gltf.scene;
+        E.currentModel = gltf.scene;
         // Normalise scale the same way processGLTF does
-        const b = new THREE.Box3().setFromObject(currentModel);
+        const b = new THREE.Box3().setFromObject(E.currentModel);
         const sz = b.getSize(new THREE.Vector3());
-        currentModel.scale.setScalar(1.6 / Math.max(sz.x, sz.y, sz.z));
-        currentModel.updateMatrixWorld(true);
-        if (!scene.getObjectById(currentModel.id)) scene.add(currentModel);
-        roomFurnitureModels[key] = currentModel;
+        E.currentModel.scale.setScalar(1.6 / Math.max(sz.x, sz.y, sz.z));
+        E.currentModel.updateMatrixWorld(true);
+        if (!E.scene.getObjectById(E.currentModel.id)) E.scene.add(E.currentModel);
+        roomFurnitureModels[key] = E.currentModel;
         // Place in room BEFORE rebuilding entries so bbox is measured in final position
         _placeFurnitureInRoom();
         // Build entries the same way the cached branch does (applies greyMat, re-injects curtains)
-        meshEntries = [];
-        _rebuildMeshEntries(currentModel, key);
+        E.meshEntries = [];
+        _rebuildMeshEntries(E.currentModel, key);
         buildMeshList();
         buildPieceList();
-        _applySnapshotToModel(currentModel, key);
+        _applySnapshotToModel(E.currentModel, key);
         markDirty();
         document.getElementById('loading').classList.remove('on');
       }, undefined, () => {
@@ -426,7 +426,7 @@ function switchModel(key) {
   }
 }
 
-// Rebuild meshEntries for a model already in scene (room mode tab switch)
+// Rebuild E.meshEntries for a model already in E.scene (room mode tab switch)
 function _rebuildMeshEntries(model, modelKey) {
   const newEntries = [];
   let meshCounter = 0;
@@ -488,11 +488,11 @@ function _rebuildMeshEntries(model, modelKey) {
   const rawIdx = {};
   newEntries.forEach(e => { if(rawCounts[e.name]>1){ rawIdx[e.name]=(rawIdx[e.name]||0)+1; e.name=e.name+' '+rawIdx[e.name]; } });
 
-  meshEntries = newEntries;
+  E.meshEntries = newEntries;
 
   // Re-inject curtain entry so piece list always shows Curtains in room mode
-  if (curtainMeshEntries.length > 0 && !meshEntries.find(e => e._isCurtain)) {
-    meshEntries.push(curtainMeshEntries[0]);
+  if (E.curtainMeshEntries.length > 0 && !E.meshEntries.find(e => e._isCurtain)) {
+    E.meshEntries.push(E.curtainMeshEntries[0]);
   }
 }
 
@@ -510,16 +510,16 @@ function resetAll() {
   if(appStore.getState().roomMode && roomFurnitureModels && appStore.getState().activeRoomSection === 'living') {
     const otherKey = appStore.getState().currentModelKey === 'chair' ? 'sofa' : 'chair';
     if(roomFurnitureModels[otherKey]) {
-      scene.remove(roomFurnitureModels[otherKey]);
+      E.scene.remove(roomFurnitureModels[otherKey]);
       roomFurnitureModels[otherKey] = null;
     }
     const otherUrl = getGLBUrl(otherKey);
-    gltfLoader.load(otherUrl, gltf => {
+    E.gltfLoader.load(otherUrl, gltf => {
       const m = gltf.scene;
       const box = new THREE.Box3().setFromObject(m);
       const sz = box.getSize(new THREE.Vector3());
       m.scale.setScalar(1.6/Math.max(sz.x,sz.y,sz.z));
-      scene.add(m);
+      E.scene.add(m);
       roomFurnitureModels[otherKey] = m;
       _placeFurnitureInRoom();
     });

@@ -3,7 +3,7 @@
 // global scope across all src/*.js files, preserving original semantics.
 // ── Build fabric library UI ───────────────────────────────────────────────
 function buildLibrary() {
-  if (appStore.getState().roomMode && meshEntries.find(e => e._isCurtain && e.pieceSelected)) {
+  if (appStore.getState().roomMode && E.meshEntries.find(e => e._isCurtain && e.pieceSelected)) {
     buildCurtainLibrary();
     return;
   }
@@ -132,12 +132,12 @@ function buildLibrary() {
 
     sw.addEventListener('click', () => {
       if (appStore.getState().roomMode) {
-        const selected = meshEntries.filter(e => e.pieceSelected);
+        const selected = E.meshEntries.filter(e => e.pieceSelected);
         if (!selected.length) { showToast('Click a piece in the list →'); return; }
         setActiveFabric(gi + ':' + ii); renderActiveSwatch();
         applySwatchToEntries(item, selected);
       } else {
-        const checked = meshEntries.filter(e => e.checked);
+        const checked = E.meshEntries.filter(e => e.checked);
         if (!checked.length) { showToast('Select a zone first →'); return; }
         setActiveFabric(gi + ':' + ii); renderActiveSwatch();
         applySwatchToEntries(item, checked);

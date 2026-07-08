@@ -2,40 +2,40 @@
 // Classic script (not a module): top-level let/const/function share the
 // global scope across all src/*.js files, preserving original semantics.
 // ── AI Render ─────────────────────────────────────────────────────────────
-// Snapshot camera + background/clear-color state around an offscreen capture.
+// Snapshot E.camera + background/clear-color state around an offscreen capture.
 // Returns split restorers because renderScene and the capture paths restore in
 // different orders (each preserved verbatim from the original inline blocks).
 function _saveCaptureState() {
   const savedSph = { ...sph };
-  const savedTgt = tgt.clone();
-  const savedBg = scene.background;
-  const savedClear = renderer.getClearColor(new THREE.Color()).clone();
-  const savedClearAlpha = renderer.getClearAlpha();
+  const savedTgt = E.tgt.clone();
+  const savedBg = E.scene.background;
+  const savedClear = E.renderer.getClearColor(new THREE.Color()).clone();
+  const savedClearAlpha = E.renderer.getClearAlpha();
   return {
-    restoreCamera() { sph = savedSph; tgt.copy(savedTgt); camUpdate(); },
-    restoreBackground() { scene.background = savedBg; renderer.setClearColor(savedClear, savedClearAlpha); },
+    restoreCamera() { E.sph = savedSph; E.tgt.copy(savedTgt); camUpdate(); },
+    restoreBackground() { E.scene.background = savedBg; E.renderer.setClearColor(savedClear, savedClearAlpha); },
   };
 }
 
 // Force two fresh frames (dirty-flag loop flushed) and grab the canvas.
 async function _captureFrame(waitA, waitB, quality) {
-  renderer.render(scene, camera);
+  E.renderer.render(E.scene, E.camera);
   await new Promise(r => setTimeout(r, waitA));
-  renderer.render(scene, camera);
+  E.renderer.render(E.scene, E.camera);
   await new Promise(r => setTimeout(r, waitB));
-  return renderer.domElement.toDataURL('image/jpeg', quality);
+  return E.renderer.domElement.toDataURL('image/jpeg', quality);
 }
 
-// Shared skeleton for the two "clean scene" captures: hide room props (keeping
-// configured curtains), neutral warm-white background, position camera via
+// Shared skeleton for the two "clean E.scene" captures: hide room props (keeping
+// configured curtains), neutral warm-white background, position E.camera via
 // `frame()`, capture, then restore everything.
 async function _captureCleanScene(frame) {
   const saved = _saveCaptureState();
   const restoreRoom = _vimrHideRoomExceptCurtains();
 
   const bg = new THREE.Color(0xf5f2ee);
-  scene.background = bg;
-  renderer.setClearColor(bg, 1);
+  E.scene.background = bg;
+  E.renderer.setClearColor(bg, 1);
 
   frame();
   camUpdate();
@@ -51,24 +51,24 @@ async function _captureCleanScene(frame) {
 }
 
 async function renderScene() {
-  if(!currentModel) { showToast('Load a model first!'); return; }
+  if(!E.currentModel) { showToast('Load a model first!'); return; }
   document.getElementById('loading').classList.add('on');
   document.getElementById('load-txt').textContent = appStore.getState().roomMode ? 'Capturing Room…' : 'Capturing Scene…';
 
   const saved = _saveCaptureState();
 
   if (appStore.getState().roomMode) {
-    // Match the default room-view camera so the render matches what the user sees.
-    sph = { theta: 0.05 + Math.PI, phi: 1.15, r: 9.0 };
-    tgt.set(0, -0.3, 0);
-    scene.background = new THREE.Color(0xf5f2ee);
-    renderer.setClearColor(0xf5f2ee, 1);
+    // Match the default room-view E.camera so the render matches what the user sees.
+    E.sph = { theta: 0.05 + Math.PI, phi: 1.15, r: 9.0 };
+    E.tgt.set(0, -0.3, 0);
+    E.scene.background = new THREE.Color(0xf5f2ee);
+    E.renderer.setClearColor(0xf5f2ee, 1);
   } else {
     // Product mode: clean hero angle — slightly elevated front-right view
-    sph = { theta: 0.6, phi: 1.05, r: 3.8 };
-    tgt.set(0, 0.1, 0);
-    scene.background = new THREE.Color(0xf7f5f2);
-    renderer.setClearColor(0xf7f5f2, 1);
+    E.sph = { theta: 0.6, phi: 1.05, r: 3.8 };
+    E.tgt.set(0, 0.1, 0);
+    E.scene.background = new THREE.Color(0xf7f5f2);
+    E.renderer.setClearColor(0xf7f5f2, 1);
   }
   camUpdate();
 
@@ -83,7 +83,7 @@ async function renderScene() {
 
     if (!apiAvailable) {
       // No API — just show the captured screenshot as a high-quality preview
-      showToast(appStore.getState().roomMode ? 'Room scene captured!' : 'Deploy to Vercel for AI Rendering');
+      showToast(appStore.getState().roomMode ? 'Room E.scene captured!' : 'Deploy to Vercel for AI Rendering');
       showRenderedImage(dataUrl, true);
       return;
     }
@@ -110,7 +110,7 @@ async function renderScene() {
     console.error('Render error:', e);
     showToast('Error generating render.');
   } finally {
-    // Restore camera + background to where the user left off. Deliberately in
+    // Restore E.camera + background to where the user left off. Deliberately in
     // finally, AFTER the API round-trip — the hero angle stays on screen while
     // the render generates (original behavior).
     saved.restoreCamera();
@@ -122,16 +122,16 @@ async function renderScene() {
 // ── View in My Room ───────────────────────────────────────────────────────
 
 // In living room mode, ensure the companion piece (chair ↔ sofa) is loaded and
-// in scene before we capture. Chair is not preloaded so it can still be loading
+// in E.scene before we capture. Chair is not preloaded so it can still be loading
 // when the user clicks "View in My Room".
 function _ensureCompanionLoaded() {
   if (!appStore.getState().roomMode || appStore.getState().activeRoomSection === 'bedroom') return Promise.resolve();
   const otherKey = appStore.getState().currentModelKey === 'chair' ? 'sofa' : 'chair';
   const other = roomFurnitureModels[otherKey];
-  if (other && scene.getObjectById(other.id)) return Promise.resolve(); // already visible
+  if (other && E.scene.getObjectById(other.id)) return Promise.resolve(); // already visible
   if (other) {
-    // Loaded but not in scene — add it now
-    scene.add(other);
+    // Loaded but not in E.scene — add it now
+    E.scene.add(other);
     const os = FURNITURE_SLOTS[otherKey];
     if (os) _seatOnFloor(other, os.x, os.z, os.rotY, os.scale || 1.0);
     markDirty();
@@ -140,11 +140,11 @@ function _ensureCompanionLoaded() {
   // Not loaded yet — kick off load and wait (max 10 s)
   return new Promise(resolve => {
     const url = getGLBUrl(otherKey);
-    const _gen = _roomLoadGen;
+    const _gen = E._roomLoadGen;
     const fallback = setTimeout(resolve, 10000);
-    gltfLoader.load(url, gltf => {
+    E.gltfLoader.load(url, gltf => {
       clearTimeout(fallback);
-      if (_roomLoadGen !== _gen) { resolve(); return; }
+      if (E._roomLoadGen !== _gen) { resolve(); return; }
       if (roomFurnitureModels[otherKey]) { resolve(); return; } // beat us to it
       const m = gltf.scene;
       const b = new THREE.Box3().setFromObject(m);
@@ -152,7 +152,7 @@ function _ensureCompanionLoaded() {
       m.scale.setScalar(1.6 / Math.max(sz.x, sz.y, sz.z));
       m.updateMatrixWorld(true);
       roomFurnitureModels[otherKey] = m;
-      scene.add(m);
+      E.scene.add(m);
       const os = FURNITURE_SLOTS[otherKey];
       if (os) _seatOnFloor(m, os.x, os.z, os.rotY, os.scale || 1.0);
       _applySnapshotToModel(m, otherKey);
@@ -181,23 +181,23 @@ function _vimrIsSingleAsset() {
 // Whether the currently configured curtains should be pulled into a "View in My
 // Room" capture alongside the furniture.
 function _vimrCurtainsIncluded() {
-  return curtainsVisible && curtainMeshEntries.length > 0 && appStore.getState().curtainState.shape !== 'none';
+  return E.curtainsVisible && E.curtainMeshEntries.length > 0 && appStore.getState().curtainState.shape !== 'none';
 }
 
-// Hides everything under roomGroup EXCEPT curtain meshes, so captures exclude room
+// Hides everything under E.roomGroup EXCEPT curtain meshes, so captures exclude room
 // decor (walls, plants, bookcase) but keep the user's configured curtains visible.
-// _blindsGroup lives directly on `scene` (not roomGroup) so it's untouched either way.
+// E._blindsGroup lives directly on `E.scene` (not E.roomGroup) so it's untouched either way.
 // Returns a restore function.
 function _vimrHideRoomExceptCurtains() {
-  if (!roomGroup) return () => {};
+  if (!E.roomGroup) return () => {};
   if (!_vimrCurtainsIncluded()) {
-    const wasVisible = roomGroup.visible;
-    roomGroup.visible = false;
-    return () => { roomGroup.visible = wasVisible; };
+    const wasVisible = E.roomGroup.visible;
+    E.roomGroup.visible = false;
+    return () => { E.roomGroup.visible = wasVisible; };
   }
-  const curtainMeshSet = new Set(curtainMeshEntries.map(e => e.mesh));
+  const curtainMeshSet = new Set(E.curtainMeshEntries.map(e => e.mesh));
   const hidden = [];
-  roomGroup.traverse(child => {
+  E.roomGroup.traverse(child => {
     if (child.isMesh && !curtainMeshSet.has(child) && child.visible) {
       hidden.push(child);
       child.visible = false;
@@ -208,25 +208,25 @@ function _vimrHideRoomExceptCurtains() {
 
 // Capture ONLY the currently active model (chair, sofa, or bed) on a clean
 // neutral background, auto-framed to its own bounding box so it fills the
-// shot facing the camera — same hero-angle style as the product Render button.
+// shot facing the E.camera — same hero-angle style as the product Render button.
 // Used for per-asset "View in My Room" from the simulator, and for bedroom
 // room-view where there is no companion piece. If curtains are configured and
 // visible (bedroom), they're included in both the visibility pass and the frame.
 async function captureSingleAssetScene() {
-  if (!currentModel) return null;
+  if (!E.currentModel) return null;
   return _captureCleanScene(() => {
-    // Auto-fit camera to the model's (+ curtains', if included) bounding box, using
+    // Auto-fit E.camera to the model's (+ curtains', if included) bounding box, using
     // the same relative viewing angle as the proven product hero shot.
-    const box = new THREE.Box3().setFromObject(currentModel);
+    const box = new THREE.Box3().setFromObject(E.currentModel);
     if (_vimrCurtainsIncluded()) {
-      curtainMeshEntries.forEach(e => { if (e.mesh.visible) box.expandByObject(e.mesh); });
-      if (_blindsGroup && _blindsGroup.visible) box.expandByObject(_blindsGroup);
+      E.curtainMeshEntries.forEach(e => { if (e.mesh.visible) box.expandByObject(e.mesh); });
+      if (E._blindsGroup && E._blindsGroup.visible) box.expandByObject(E._blindsGroup);
     }
     const center = box.getCenter(new THREE.Vector3());
     const size = box.getSize(new THREE.Vector3());
     const maxDim = Math.max(size.x, size.y, size.z, 0.001);
-    tgt.set(center.x, center.y - size.y * 0.15, center.z);
-    sph = { theta: 0.6, phi: 1.05, r: maxDim * 2.1 };
+    E.tgt.set(center.x, center.y - size.y * 0.15, center.z);
+    E.sph = { theta: 0.6, phi: 1.05, r: maxDim * 2.1 };
   });
 }
 
@@ -237,8 +237,8 @@ async function captureDesignedScene() {
   await _ensureCompanionLoaded();
   return _captureCleanScene(() => {
     // Frame both sofa (x≈0.2, z≈1.0) and chair (x≈2.2, z≈0.89) together
-    tgt.set(1.0, 0.0, 0.8);
-    sph = { theta: Math.PI, phi: 1.1, r: 5.5 };
+    E.tgt.set(1.0, 0.0, 0.8);
+    E.sph = { theta: Math.PI, phi: 1.1, r: 5.5 };
   });
 }
 
@@ -261,7 +261,7 @@ function _vimrCompressImage(dataUrl, maxPx, quality) {
 }
 
 function openViewInMyRoom() {
-  if (!currentModel) { showToast('Load a furniture piece first'); return; }
+  if (!E.currentModel) { showToast('Load a furniture piece first'); return; }
 
   const isSingleAsset = _vimrIsSingleAsset();
   const assetLabel = isSingleAsset ? _vimrAssetLabel(appStore.getState().currentModelKey) : 'sofa and accent chair';
@@ -442,7 +442,7 @@ async function _vimrGenerate(ov, body, genBtn) {
   const isSingleAsset = _vimrIsSingleAsset();
   const assetLabel = isSingleAsset ? _vimrAssetLabel(appStore.getState().currentModelKey) : 'sofa and accent chair';
 
-  // ── Step 1: Capture Three.js scene (furniture only, clean bg) ────────────
+  // ── Step 1: Capture Three.js E.scene (furniture only, clean bg) ────────────
   let rawCapture = null;
   try {
     const raw = isSingleAsset ? await captureSingleAssetScene() : await captureDesignedScene();
@@ -573,7 +573,7 @@ function showRenderedImage(imageUrl, isLocal) {
 }
 
 async function exportGLB() {
-  if(!currentModel){showToast('No model loaded');return;}
+  if(!E.currentModel){showToast('No model loaded');return;}
   document.getElementById('loading').classList.add('on');
   document.getElementById('load-txt').textContent='Exporting…';
   try {
@@ -581,7 +581,7 @@ async function exportGLB() {
       await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/exporters/GLTFExporter.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
     }
     const exporter=new THREE.GLTFExporter();
-    exporter.parse(currentModel,result=>{
+    exporter.parse(E.currentModel,result=>{
       const blob=new Blob([result],{type:'application/octet-stream'});
       const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=appStore.getState().currentModelKey+'_custom.glb';link.click();
       showToast('Exported!');

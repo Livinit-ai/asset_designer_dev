@@ -15,16 +15,16 @@ loadScripts([
 
   // Init TransformControls for furniture move mode
   if (THREE.TransformControls) {
-    transformControls = new THREE.TransformControls(camera, renderer.domElement);
-    transformControls.visible = false;
-    transformControls.setMode('translate');
-    transformControls.setTranslationSnap(null);
-    transformControls.setRotationSnap(null);
-    scene.add(transformControls);
+    E.transformControls = new THREE.TransformControls(E.camera, E.renderer.domElement);
+    E.transformControls.visible = false;
+    E.transformControls.setMode('translate');
+    E.transformControls.setTranslationSnap(null);
+    E.transformControls.setRotationSnap(null);
+    E.scene.add(E.transformControls);
 
     // Constrain translation to XZ plane (floor plane only)
-    transformControls.addEventListener('objectChange', () => {
-      if (tcMode === 'translate') {
+    E.transformControls.addEventListener('objectChange', () => {
+      if (E.tcMode === 'translate') {
         const model = roomFurnitureModels[appStore.getState().currentModelKey];
         if (model) {
           // Keep Y pinned to floor (furniture shouldn't float)
@@ -37,7 +37,7 @@ loadScripts([
       markDirty();
     });
 
-    transformControls.addEventListener('mouseUp', () => { markDirty(); });
+    E.transformControls.addEventListener('mouseUp', () => { markDirty(); });
   }
 
   initDragDrop();
@@ -51,7 +51,7 @@ loadScripts([
     { url: BED_WOODEN_GLB, roomKey: null   },
     { url: BED_FABRIC_GLB, roomKey: null   },
   ].forEach(({ url, roomKey }) => {
-    gltfLoader.load(url, gltf => {
+    E.gltfLoader.load(url, gltf => {
       if (!_gltfSceneCache[url]) _gltfSceneCache[url] = gltf.scene;
       if (roomKey === 'sofa' && !roomFurnitureModels.sofa) {
         const m = gltf.scene.clone(true);

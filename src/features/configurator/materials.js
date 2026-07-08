@@ -34,7 +34,7 @@ async function enhanceTexture(dataUrl, cacheKey) {
 // Generation token shared by the material-apply pipelines. Each user apply
 // (swatch click or diffuse upload) bumps it; any in-flight older apply bails
 // after its awaits so the LAST action wins, not the last network response.
-// Same pattern as _roomLoadGen for room loads.
+// Same pattern as E._roomLoadGen for room loads.
 let _applyGen = 0;
 
 // Clone a loaded (shared, cached) texture with per-entry tiling — every mesh
@@ -58,7 +58,7 @@ function _commitEntryMaterial(entry, mat) {
     entry.mesh.material = mat;
   }
   if (entry._isCurtain) {
-    curtainMeshEntries.forEach(ce => { if (ce !== entry) ce.mesh.material = mat; });
+    E.curtainMeshEntries.forEach(ce => { if (ce !== entry) ce.mesh.material = mat; });
   }
 }
 
@@ -349,9 +349,9 @@ async function makeSeamlessTexture(dataUrl) {
 
 async function handleDiffuseUpload(file) {
   // Use checked parts if any are selected, otherwise fall back to all parts.
-  // meshEntries is rebuilt on room enter (_rebuildMeshEntries), so it is the
+  // E.meshEntries is rebuilt on room enter (_rebuildMeshEntries), so it is the
   // correct source in both modes.
-  const all = meshEntries;
+  const all = E.meshEntries;
   const checked = all.filter(e => e.checked);
   const entries = checked.length ? checked : all.filter(e => !e._isCurtain);
   if (!entries.length) { showToast('Load a model first'); return; }
@@ -421,9 +421,9 @@ function initDragDrop() {
   const vwrap = document.getElementById('viewport-wrap');
 
   document.addEventListener('mousemove', e => {
-    if(!dragActive) return;
-    ghost.style.left = e.clientX + 'px';
-    ghost.style.top  = e.clientY + 'px';
+    if(!E.dragActive) return;
+    E.ghost.style.left = e.clientX + 'px';
+    E.ghost.style.top  = e.clientY + 'px';
     // Check if over canvas
     const rect = vwrap.getBoundingClientRect();
     if(e.clientX>=rect.left && e.clientX<=rect.right && e.clientY>=rect.top && e.clientY<=rect.bottom) {
@@ -438,9 +438,9 @@ function initDragDrop() {
   });
 
   document.addEventListener('mouseup', e => {
-    if(!dragActive) return;
-    dragActive = false;
-    ghost.style.display = 'none';
+    if(!E.dragActive) return;
+    E.dragActive = false;
+    E.ghost.style.display = 'none';
     vwrap.classList.remove('drag-over');
     document.getElementById('drop-hint').classList.remove('show');
 
@@ -449,7 +449,7 @@ function initDragDrop() {
       dropFabricOnCanvas(e, rect);
     }
     clearMeshHighlight();
-    dragItem = null;
+    E.dragItem = null;
   });
 }
 
@@ -463,12 +463,12 @@ function screenToNDC(e, rect) {
 function getHitEntry(e, rect) {
   const ndc = screenToNDC(e, rect);
   mouse.set(ndc.x, ndc.y);
-  raycaster.setFromCamera(mouse, camera);
+  raycaster.setFromCamera(mouse, E.camera);
 
   // Build target mesh list: furniture + all curtain meshes in room mode
   const allEntries = appStore.getState().roomMode
-    ? [...meshEntries, ...curtainMeshEntries.filter(c => !meshEntries.includes(c))]
-    : meshEntries;
+    ? [...meshEntries, ...curtainMeshEntries.filter(c => !E.meshEntries.includes(c))]
+    : E.meshEntries;
   const meshes = allEntries.map(en=>en.mesh).filter(Boolean);
   const hits = raycaster.intersectObjects(meshes, true);
   if(!hits.length) return null;
@@ -480,8 +480,8 @@ function getHitEntry(e, rect) {
     const found = allEntries.find(en => en.mesh === obj);
     if (found) {
       // If it's a non-representative curtain mesh, return the representative instead
-      if (found._isCurtain && curtainMeshEntries[0] && found !== curtainMeshEntries[0]) {
-        return meshEntries.find(en => en._isCurtain) || curtainMeshEntries[0];
+      if (found._isCurtain && E.curtainMeshEntries[0] && found !== E.curtainMeshEntries[0]) {
+        return E.meshEntries.find(en => en._isCurtain) || E.curtainMeshEntries[0];
       }
       return found;
     }
@@ -511,44 +511,44 @@ function clearMeshHighlight() {
   }
 }
 async function dropFabricOnCanvas(e, rect) {
-  if(!dragItem) return;
+  if(!E.dragItem) return;
 
   if(appStore.getState().roomMode) {
     // In room mode: prefer the piece the user explicitly selected in the piece list.
     // Fall back to raycast hit so direct-drop-on-mesh still works.
-    const selectedEntry = meshEntries.find(en => en.pieceSelected);
+    const selectedEntry = E.meshEntries.find(en => en.pieceSelected);
     const hitEntry = getHitEntry(e, rect);
     const target = selectedEntry || hitEntry;
     if(!target) { showToast('Select a part in the list, then drop'); return; }
-    await applySwatchToEntries(dragItem.item, [target]);
+    await applySwatchToEntries(E.dragItem.item, [target]);
     return;
   }
 
   const entry = getHitEntry(e, rect);
   if(!entry) { showToast('Drop on a furniture part'); return; }
   // Select only the dropped-on entry — leave other entries' materials intact
-  meshEntries.forEach(en => { en.checked = false; });
+  E.meshEntries.forEach(en => { en.checked = false; });
   entry.checked = true;
   if(Array.isArray(entry.mesh.material)){const matArr=[...entry.mesh.material];if(entry.matIndex>=0&&entry.matIndex<matArr.length){matArr[entry.matIndex]=entry.greyMat;entry.mesh.material=matArr;}}else{entry.mesh.material=entry.greyMat;}
   buildMeshList();
   _refreshZoneLabelStates();
-  await applySwatchToEntries(dragItem.item, [entry]);
+  await applySwatchToEntries(E.dragItem.item, [entry]);
 }
 
 function startDrag(e, gi, ii) {
   const item = LIBRARY[appStore.getState().currentModelKey][gi].items[ii];
-  dragItem = {gi, ii, item};
-  dragActive = true;
-  ghost.style.display = 'block';
-  ghost.style.left = e.clientX + 'px';
-  ghost.style.top  = e.clientY + 'px';
+  E.dragItem = {gi, ii, item};
+  E.dragActive = true;
+  E.ghost.style.display = 'block';
+  E.ghost.style.left = e.clientX + 'px';
+  E.ghost.style.top  = e.clientY + 'px';
   if(item.img) {
-    ghostImg.src = item.img;
-    ghostImg.style.display = 'block';
-    ghost.style.background = 'none';
+    E.ghostImg.src = item.img;
+    E.ghostImg.style.display = 'block';
+    E.ghost.style.background = 'none';
   } else {
-    ghostImg.style.display = 'none';
-    ghost.style.background = item.hex || '#aaa';
+    E.ghostImg.style.display = 'none';
+    E.ghost.style.background = item.hex || '#aaa';
   }
 }
 
@@ -556,7 +556,7 @@ function startDrag(e, gi, ii) {
 function updateBrightness(val) {
   setSlider('brightness', val);
   ['v-brightness','v-brightness-r'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=val.toFixed(2); });
-  meshEntries.forEach(entry => {
+  E.meshEntries.forEach(entry => {
     if(!entry.checked && !entry.pieceSelected) return;
     const mat = entry.greyMat;
     const safeVal = Math.max(0.01, val);
@@ -570,7 +570,7 @@ function applyProp(prop, val) {
   const valEl = document.getElementById('v-'+prop);
   if(valEl) valEl.textContent = val.toFixed(2);
   setSlider(prop, val); // prop is only ever roughness/metalness/sheen (see oninput handlers)
-  meshEntries.forEach(entry => {
+  E.meshEntries.forEach(entry => {
     if(!entry.checked && !entry.pieceSelected) return;
     if(prop==='sheen') entry.greyMat.sheen=val;
     else entry.greyMat[prop]=val;
@@ -581,7 +581,7 @@ function applyProp(prop, val) {
 function updateTexScale(val) {
   setSlider('scale', val);
   ['v-scale','v-scale-r'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=val.toFixed(1); });
-  meshEntries.forEach(entry => {
+  E.meshEntries.forEach(entry => {
     if(!entry.checked && !entry.pieceSelected) return;
     const physRepeat = val*(entry.uvScaleFactor/BASE_TILE);
     const mat = entry.greyMat;
@@ -596,7 +596,7 @@ function updateTexScale(val) {
 function updateNormScale(val) {
   setSlider('norm', val);
   const el = document.getElementById('v-norm'); if(el) el.textContent=val.toFixed(1);
-  meshEntries.forEach(entry => {
+  E.meshEntries.forEach(entry => {
     if(!entry.checked && !entry.pieceSelected) return;
     if(entry.greyMat.normalMap){ entry.greyMat.normalScale.set(val,val); entry.greyMat.needsUpdate=true; }
   });

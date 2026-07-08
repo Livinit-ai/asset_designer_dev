@@ -21,7 +21,7 @@ function toggleRoomView() {
 
   if(appStore.getState().roomMode) {
     // Save snapshot of current model's fabric state before entering room
-    if (meshEntries.length > 0) {
+    if (E.meshEntries.length > 0) {
       saveMaterialSnapshot();
     }
     // Auto-select room section based on furniture type
@@ -37,15 +37,15 @@ function toggleRoomView() {
     _syncProductTabLock();
     if (_enterBed) {
       buildBedroomRoom(() => {
-        sph = {theta: Math.PI, phi: 1.1, r: 9.0};
-        tgt.set(0, 0, 0);
+        E.sph = {theta: Math.PI, phi: 1.1, r: 9.0};
+        E.tgt.set(0, 0, 0);
         camUpdate();
       });
     } else {
       buildRoom(() => {
         // Look INTO the room interior from the open front-right corner.
-        sph = {theta: 0.05 + Math.PI, phi: 1.15, r: 7.0};
-        tgt.set(0, -0.3, 0);
+        E.sph = {theta: 0.05 + Math.PI, phi: 1.15, r: 7.0};
+        E.tgt.set(0, -0.3, 0);
         camUpdate();
       });
     }
@@ -59,27 +59,27 @@ function toggleRoomView() {
     _syncProductTabLock(); // clears all prod-tab--locked since appStore.getState().roomMode is now false
     removeRoom();
     // Restore the active model to clean centered product-view position
-    if (currentModel) {
-      currentModel.rotation.set(0, 0, 0);
+    if (E.currentModel) {
+      E.currentModel.rotation.set(0, 0, 0);
       // Reset scale to normalised base (undo room slot scale)
-      if (currentModel._baseScale) {
-        currentModel.scale.copy(currentModel._baseScale);
-        currentModel._baseScale = null;
+      if (E.currentModel._baseScale) {
+        E.currentModel.scale.copy(E.currentModel._baseScale);
+        E.currentModel._baseScale = null;
       }
-      currentModel.position.set(0, 0, 0);
-      currentModel.updateMatrixWorld(true);
-      const box = new THREE.Box3().setFromObject(currentModel);
+      E.currentModel.position.set(0, 0, 0);
+      E.currentModel.updateMatrixWorld(true);
+      const box = new THREE.Box3().setFromObject(E.currentModel);
       const ctr = box.getCenter(new THREE.Vector3());
-      currentModel.position.sub(ctr);
-      currentModel.updateMatrixWorld(true);
+      E.currentModel.position.sub(ctr);
+      E.currentModel.updateMatrixWorld(true);
     }
-    // Restore product-view camera
-    sph = {theta: 0.4, phi: 1.15, r: 2.2};
-    tgt.set(0, 0, 0);
+    // Restore product-view E.camera
+    E.sph = {theta: 0.4, phi: 1.15, r: 2.2};
+    E.tgt.set(0, 0, 0);
     camUpdate();
     // Re-apply environment to restore correct lighting after room session
-    if (pmremGen) {
-      scene.environment = pmremGen.fromScene(new THREE.RoomEnvironment(), 1.0).texture;
+    if (E.pmremGen) {
+      E.scene.environment = E.pmremGen.fromScene(new THREE.RoomEnvironment(), 1.0).texture;
     }
     markDirty();
   }
@@ -88,16 +88,16 @@ function toggleRoomView() {
 // ── Room geometry ─────────────────────────────────────────────────────────
 function buildRoom(onReadyCallback) {
   removeRoom();
-  const _gen = ++_roomLoadGen;
-  roomGroup = new THREE.Group();
-  scene.add(roomGroup);
+  const _gen = ++E._roomLoadGen;
+  E.roomGroup = new THREE.Group();
+  E.scene.add(E.roomGroup);
 
   // Load the room.glb as the environment
   document.getElementById('loading').classList.add('on');
   document.getElementById('load-txt').textContent = 'Loading Room…';
 
-  gltfLoader.load(ROOM_GLB, gltf => {
-    if (_roomLoadGen !== _gen) return; // superseded by a newer room build
+  E.gltfLoader.load(ROOM_GLB, gltf => {
+    if (E._roomLoadGen !== _gen) return; // superseded by a newer room build
     const roomScene = gltf.scene;
 
     // ── Scale room to ~6 units wide ──────────────────────────────────────
@@ -134,7 +134,7 @@ function buildRoom(onReadyCallback) {
     roomFloorY = detectedFloorY;
     console.log('[Room] detectedFloorY =', roomFloorY, 'bestArea =', bestArea);
 
-    roomGroup.add(roomScene);
+    E.roomGroup.add(roomScene);
 
     // ── Tag room sub-objects for chip toggles ────────────────────────────
     roomScene.traverse(child => {
@@ -157,17 +157,17 @@ function buildRoom(onReadyCallback) {
       inheritRoughness: true,
       bailIfNoMeshes: true,
     });
-    // Inject curtain representative entry into meshEntries so piece list + fabric drop works
-    if (curtainMeshEntries.length > 0) {
-      meshEntries = meshEntries.filter(e => !e._isCurtain);
-      meshEntries.push(curtainMeshEntries[0]); // show single "Curtains" entry
+    // Inject curtain representative entry into E.meshEntries so piece list + fabric drop works
+    if (E.curtainMeshEntries.length > 0) {
+      E.meshEntries = E.meshEntries.filter(e => !e._isCurtain);
+      E.meshEntries.push(E.curtainMeshEntries[0]); // show single "Curtains" entry
 
       // Restore prior in-session customization if any; otherwise defaults. Without
       // this the living-room curtains reset to a flat placeholder grey on every
       // rebuild (toggling Room View, or navigating bedroom→living) even though
       // curtainState/the fabric bar still show the user's last selection as active.
       restoreCurtainState();
-      curtainsVisible = true;
+      E.curtainsVisible = true;
       const _ccl = document.getElementById('chip-curtains-living');
       if (_ccl) _ccl.classList.add('on');
       _initCurtainFabricSwatches();
@@ -181,7 +181,7 @@ function buildRoom(onReadyCallback) {
     buildPieceList();
     markDirty();
   }, undefined, err => {
-    if (_roomLoadGen !== _gen) return;
+    if (E._roomLoadGen !== _gen) return;
     console.error('Room GLB load error:', err);
     document.getElementById('loading').classList.remove('on');
     showToast('Room GLB failed — using fallback');
@@ -198,25 +198,25 @@ function _buildProceduralRoom() {
   const wallMat = new THREE.MeshStandardMaterial({color:0xf5f0ea, roughness:0.9, side:THREE.BackSide});
   const floorMat= new THREE.MeshStandardMaterial({color:0xd4c4a8, roughness:0.8, metalness:0.02});
   const roomBox = new THREE.Mesh(new THREE.BoxGeometry(W,H,D), wallMat);
-  roomElements.walls=roomBox; roomGroup.add(roomBox);
+  roomElements.walls=roomBox; E.roomGroup.add(roomBox);
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(W,D), floorMat);
   floor.rotation.x=-Math.PI/2; floor.position.y=-1.6;
-  roomElements.floor=floor; roomGroup.add(floor);
+  roomElements.floor=floor; E.roomGroup.add(floor);
 }
 
 // ── Bedroom Room ─────────────────────────────────────────────────────────
 function buildBedroomRoom(onReadyCallback) {
   removeRoom();
-  const _gen = ++_roomLoadGen;
-  roomGroup = new THREE.Group();
-  scene.add(roomGroup);
+  const _gen = ++E._roomLoadGen;
+  E.roomGroup = new THREE.Group();
+  E.scene.add(E.roomGroup);
 
   const bedroomUrl = BEDROOM_ROOM_GLB;
   document.getElementById('loading').classList.add('on');
   document.getElementById('load-txt').textContent = 'Loading Bedroom…';
 
-  gltfLoader.load(bedroomUrl, gltf => {
-    if (_roomLoadGen !== _gen) return; // superseded by a newer room build
+  E.gltfLoader.load(bedroomUrl, gltf => {
+    if (E._roomLoadGen !== _gen) return; // superseded by a newer room build
     const fullScene = gltf.scene;
     console.log('[Bedroom] GLB loaded:', bedroomUrl, '| children:', fullScene.children.length);
 
@@ -226,7 +226,7 @@ function buildBedroomRoom(onReadyCallback) {
     fullScene.updateWorldMatrix(false, true);
     roomFloorY = -1.6;
 
-    // DoubleSide on room arch so walls are visible from camera
+    // DoubleSide on room arch so walls are visible from E.camera
     const roomArch = fullScene.getObjectByName('_9_minimalist_medium') || fullScene;
     roomArch.traverse(child => {
       if (!child.isMesh) return;
@@ -234,7 +234,7 @@ function buildBedroomRoom(onReadyCallback) {
       mats.forEach(m => { if (m) { m.side = THREE.DoubleSide; m.needsUpdate = true; } });
     });
 
-    roomGroup.add(fullScene);
+    E.roomGroup.add(fullScene);
     console.log('[Bedroom] room placed | scale:', fullScene.scale.x.toFixed(4), '| pos:', fullScene.position.x.toFixed(3), fullScene.position.y.toFixed(3), fullScene.position.z.toFixed(3));
 
     // Tag room elements for chip toggles
@@ -256,18 +256,18 @@ function buildBedroomRoom(onReadyCallback) {
       inheritRoughness: false,
       bailIfNoMeshes: false,
     });
-    if (curtainMeshEntries.length > 0) {
-      meshEntries = meshEntries.filter(e => !e._isCurtain);
-      meshEntries.push(curtainMeshEntries[0]);
+    if (E.curtainMeshEntries.length > 0) {
+      E.meshEntries = E.meshEntries.filter(e => !e._isCurtain);
+      E.meshEntries.push(E.curtainMeshEntries[0]);
     }
-    curtainsVisible = true;
+    E.curtainsVisible = true;
     // Restore prior in-session customization if any; otherwise defaults.
     restoreCurtainState();
     const _ccb = document.getElementById('chip-curtains-bedroom');
     if (_ccb) _ccb.classList.add('on');
     _initCurtainFabricSwatches();
     _showCurtainConfigPanel(true);
-    if (curtainMeshEntries.length > 0) _applyCurtainMaterial();
+    if (E.curtainMeshEntries.length > 0) _applyCurtainMaterial();
 
     // Sync bed-style chips
     ['bed_wooden', 'bed_fabric'].forEach(bk => {
@@ -276,14 +276,14 @@ function buildBedroomRoom(onReadyCallback) {
     });
 
     // Place bed using calibrated slot, then restore fabric state from product view
-    if (currentModel) {
+    if (E.currentModel) {
       const bs = BEDROOM_SLOTS[appStore.getState().currentModelKey];
-      _seatOnFloor(currentModel, bs.x, bs.z, bs.rotY, bs.scale);
-      roomFurnitureModels[appStore.getState().currentModelKey] = currentModel;
-      if (!scene.getObjectById(currentModel.id)) scene.add(currentModel);
+      _seatOnFloor(E.currentModel, bs.x, bs.z, bs.rotY, bs.scale);
+      roomFurnitureModels[appStore.getState().currentModelKey] = E.currentModel;
+      if (!E.scene.getObjectById(E.currentModel.id)) E.scene.add(E.currentModel);
       // _rebuildMeshEntries reuses origMat._livinitGrey (set in product view) so
       // fabric selections carry through automatically — no snapshot apply needed.
-      _rebuildMeshEntries(currentModel, appStore.getState().currentModelKey);
+      _rebuildMeshEntries(E.currentModel, appStore.getState().currentModelKey);
     }
 
     document.getElementById('loading').classList.remove('on');
@@ -291,7 +291,7 @@ function buildBedroomRoom(onReadyCallback) {
     buildPieceList();
     markDirty();
   }, undefined, err => {
-    if (_roomLoadGen !== _gen) return;
+    if (E._roomLoadGen !== _gen) return;
     console.error('[Bedroom] GLB load error:', err);
     document.getElementById('loading').classList.remove('on');
     showToast('Bedroom room failed');
@@ -388,7 +388,7 @@ function _buildCurtainMat(normTex, roughTex, diffTex) {
 
   let roughness  = preset.roughness;
   let opacity    = preset.opacity;
-  const baseCol  = _curtainLinColor(appStore.getState().curtainState.color);
+  const baseCol  = E._curtainLinColor(appStore.getState().curtainState.color);
 
   if (shape === 'sheer') {
     roughness = Math.min(preset.roughness + 0.04, 1.0);
@@ -418,7 +418,7 @@ function _buildCurtainMat(normTex, roughTex, diffTex) {
     ? new THREE.MeshPhysicalMaterial(matOpts)
     : new THREE.MeshStandardMaterial(matOpts);
   if (preset.physical) {
-    mat.sheen = _curtainLinColor(appStore.getState().curtainState.color, 0.7);
+    mat.sheen = E._curtainLinColor(appStore.getState().curtainState.color, 0.7);
   }
 
   // Texture repeat scales with curtain size so the weave density stays constant.
@@ -460,22 +460,22 @@ function _buildCurtainMat(normTex, roughTex, diffTex) {
 }
 
 async function _applyCurtainMaterial() {
-  if (!curtainMeshEntries.length) return;
-  if (_blindsGroup) _blindsGroup.visible = false; // default hidden; blinds branch re-shows
+  if (!E.curtainMeshEntries.length) return;
+  if (E._blindsGroup) E._blindsGroup.visible = false; // default hidden; blinds branch re-shows
   if (appStore.getState().curtainState.shape === 'none') {
-    curtainMeshEntries.forEach(e => { e.mesh.visible = false; });
+    E.curtainMeshEntries.forEach(e => { e.mesh.visible = false; });
     markDirty();
     return;
   }
   if (appStore.getState().curtainState.shape === 'blinds') {
     // Procedural slats replace the drape mesh entirely.
-    curtainMeshEntries.forEach(e => { e.mesh.visible = false; });
+    E.curtainMeshEntries.forEach(e => { e.mesh.visible = false; });
     _applyBlinds();
     return;
   }
-  curtainMeshEntries.forEach(e => { e.mesh.visible = curtainsVisible; });
+  E.curtainMeshEntries.forEach(e => { e.mesh.visible = E.curtainsVisible; });
 
-  const _gen = _roomLoadGen;
+  const _gen = E._roomLoadGen;
   const preset = CURTAIN_FABRICS.find(f => f.id === appStore.getState().curtainState.fabric) || CURTAIN_FABRICS[0];
   let normTex = null, roughTex = null, diffTex = null;
   try {
@@ -492,37 +492,37 @@ async function _applyCurtainMaterial() {
     // No diffuse fallback — if PolyHaven diffuse is unavailable we fall back to flat color.
   } catch (_) {}
 
-  if (_roomLoadGen !== _gen) return; // room was switched while textures loaded
-  _curtainNormTex  = normTex;
+  if (E._roomLoadGen !== _gen) return; // room was switched while textures loaded
+  E._curtainNormTex  = normTex;
   _curtainRoughTex = roughTex;
 
   const mat = _buildCurtainMat(normTex, roughTex, diffTex);
-  curtainMeshEntries.forEach(e => { e.mesh.material = mat; });
+  E.curtainMeshEntries.forEach(e => { e.mesh.material = mat; });
   _applyCurtainSize(); // re-apply node scale + UV repeat (fresh meshes after room load)
 }
 
 function _applyCurtainColor() {
-  if (!curtainMeshEntries.length) return;
+  if (!E.curtainMeshEntries.length) return;
   if (appStore.getState().curtainState.shape === 'none') return;
   if (appStore.getState().curtainState.shape === 'blinds') {
-    if (_blindsGroup) {
-      _blindsGroup.userData.slatMat.color.copy(_curtainLinColor(appStore.getState().curtainState.color));
-      _blindsGroup.userData.railMat.color.copy(_curtainLinColor(appStore.getState().curtainState.color, 0.7));
-      _blindsGroup.userData.slatMat.needsUpdate = true;
+    if (E._blindsGroup) {
+      E._blindsGroup.userData.slatMat.color.copy(E._curtainLinColor(appStore.getState().curtainState.color));
+      E._blindsGroup.userData.railMat.color.copy(E._curtainLinColor(appStore.getState().curtainState.color, 0.7));
+      E._blindsGroup.userData.slatMat.needsUpdate = true;
     }
     markDirty();
     return;
   }
   const preset  = CURTAIN_FABRICS.find(f => f.id === appStore.getState().curtainState.fabric) || CURTAIN_FABRICS[0];
   const shape   = appStore.getState().curtainState.shape;
-  const baseCol = _curtainLinColor(appStore.getState().curtainState.color);
+  const baseCol = E._curtainLinColor(appStore.getState().curtainState.color);
   let opacity   = preset.opacity;
   if (shape === 'sheer') {
     opacity = 0.42;
   } else if (shape === 'pleated') {
     baseCol.multiplyScalar(0.78);
   }
-  curtainMeshEntries.forEach(e => {
+  E.curtainMeshEntries.forEach(e => {
     if (!e.mesh.material) return;
     const mats = Array.isArray(e.mesh.material) ? e.mesh.material : [e.mesh.material];
     mats.forEach(m => {
@@ -577,13 +577,13 @@ function _applyCurtainSize() {
   const wf = appStore.getState().curtainState.widthFactor  || 1;
   const lf = appStore.getState().curtainState.lengthFactor || 1;
   if (appStore.getState().curtainState.shape === 'blinds') { _applyBlinds(); return; } // slats rebuild to new dims
-  _curtainNodes.forEach(n => {
+  E._curtainNodes.forEach(n => {
     const base = n.userData._curtainBaseScale;
     if (!base) return;
     n.scale.set(base.x * wf, base.y * lf, base.z);
     n.updateMatrixWorld(true);
   });
-  curtainMeshEntries.forEach(e => {
+  E.curtainMeshEntries.forEach(e => {
     if (!e.mesh.material) return;
     const mats = Array.isArray(e.mesh.material) ? e.mesh.material : [e.mesh.material];
     mats.forEach(m => {
@@ -663,7 +663,7 @@ function _fixCurtainNormals(curtainNodes, roomScene) {
 const BLINDS_TILT = THREE.MathUtils.degToRad(32); // half-open venetian angle
 
 // Blinds mount AT the window, but the only anchor is the drape footprint
-// (_curtainBaseBox), which spans the full floor-to-rod drape — the rod sits well
+// (E._curtainBaseBox), which spans the full floor-to-rod drape — the rod sits well
 // above the window head and the panels puddle to the floor. Reusing it raw makes
 // the shade ride up the bare wall above the window (and overshoot the sill below).
 // Confine the shade to the window band: cover ~72% of the drape height, biased
@@ -672,22 +672,22 @@ const SHADE_VCOVER = 0.72; // shade height as a fraction of the drape footprint 
 const SHADE_VRISE  = 0.04; // shade centre lifted above the drape-box centre (× footprint height)
 
 function _disposeBlinds() {
-  if (!_blindsGroup) return;
-  _blindsGroup.traverse(o => {
+  if (!E._blindsGroup) return;
+  E._blindsGroup.traverse(o => {
     if (o.geometry) o.geometry.dispose();
     if (o.material) { (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.dispose()); }
   });
-  if (_blindsGroup.parent) _blindsGroup.parent.remove(_blindsGroup);
-  _blindsGroup = null;
+  if (E._blindsGroup.parent) E._blindsGroup.parent.remove(E._blindsGroup);
+  E._blindsGroup = null;
 }
 
 // Shared orientation + position for the rigid blind panel. The drape's averaged
-// normal (_curtainFace) is noisy because the drape is wavy; feeding that straight in
+// normal (E._curtainFace) is noisy because the drape is wavy; feeding that straight in
 // skews the flat panel a few degrees, swinging its far edge back through the window
 // glass → z-fighting. Snap the facing axis to the nearest world cardinal so the panel
 // stays parallel to the glass, then stand it off toward the room.
 function _curtainPanelFrame(offset) {
-  const zAxis = _curtainFace.clone(); zAxis.y = 0;
+  const zAxis = E._curtainFace.clone(); zAxis.y = 0;
   if (zAxis.lengthSq() < 1e-6) zAxis.set(-1, 0, 0);
   zAxis.normalize();
   if (Math.abs(zAxis.x) >= Math.abs(zAxis.z)) zAxis.set(Math.sign(zAxis.x) || -1, 0, 0);
@@ -696,17 +696,17 @@ function _curtainPanelFrame(offset) {
   const xAxis = new THREE.Vector3().crossVectors(up, zAxis).normalize();
   const yAxis = new THREE.Vector3().crossVectors(zAxis, xAxis).normalize();
   const basis = new THREE.Matrix4().makeBasis(xAxis, yAxis, zAxis);
-  const position = _curtainBaseBox.center.clone().add(zAxis.clone().multiplyScalar(offset));
+  const position = E._curtainBaseBox.center.clone().add(zAxis.clone().multiplyScalar(offset));
   const quaternion = new THREE.Quaternion().setFromRotationMatrix(basis);
   return { position, quaternion };
 }
 
 function _buildBlindsGeometry() {
   _disposeBlinds();
-  if (!_curtainBaseBox || !_curtainFace || !scene) return;
+  if (!E._curtainBaseBox || !E._curtainFace || !E.scene) return;
   const wf = appStore.getState().curtainState.widthFactor || 1;
   const lf = appStore.getState().curtainState.lengthFactor || 1;
-  const sz = _curtainBaseBox.size;
+  const sz = E._curtainBaseBox.size;
   const fullH  = sz.y * lf;                          // full drape footprint height
   const width  = Math.max(sz.x, sz.z) * wf * 0.98;
   const height = fullH * SHADE_VCOVER * 0.98;        // confined to the window band
@@ -720,10 +720,10 @@ function _buildBlindsGeometry() {
 
   // Faux-wood louvers: solid boxes (real thickness) so edges catch light.
   const slatMat = new THREE.MeshStandardMaterial({
-    color: _curtainLinColor(appStore.getState().curtainState.color), roughness: 0.62, metalness: 0,
+    color: E._curtainLinColor(appStore.getState().curtainState.color), roughness: 0.62, metalness: 0,
   });
   const railMat = new THREE.MeshStandardMaterial({
-    color: _curtainLinColor(appStore.getState().curtainState.color, 0.7), roughness: 0.7, metalness: 0,
+    color: E._curtainLinColor(appStore.getState().curtainState.color, 0.7), roughness: 0.7, metalness: 0,
   });
 
   const tilt      = BLINDS_TILT;
@@ -767,31 +767,31 @@ function _buildBlindsGeometry() {
 
   grp.userData.slatMat = slatMat;
   grp.userData.railMat = railMat;
-  _blindsGroup = grp;
-  scene.add(grp);
+  E._blindsGroup = grp;
+  E.scene.add(grp);
 }
 
 // Show blinds (rebuilds with current colour + size), hiding the drape meshes.
 function _applyBlinds() {
   _buildBlindsGeometry();
-  if (_blindsGroup) _blindsGroup.visible = curtainsVisible;
+  if (E._blindsGroup) E._blindsGroup.visible = E.curtainsVisible;
   markDirty();
 }
 
 function toggleCurtains() {
-  curtainsVisible = !curtainsVisible;
+  E.curtainsVisible = !E.curtainsVisible;
   ['chip-curtains-living', 'chip-curtains-bedroom'].forEach(id => {
     const btn = document.getElementById(id);
-    if (btn) btn.classList.toggle('on', curtainsVisible);
+    if (btn) btn.classList.toggle('on', E.curtainsVisible);
   });
-  if (curtainsVisible) {
+  if (E.curtainsVisible) {
     _applyCurtainMaterial(); // respects shape='none'/'blinds' internally
   } else {
-    curtainMeshEntries.forEach(e => { e.mesh.visible = false; });
-    if (_blindsGroup) _blindsGroup.visible = false;
+    E.curtainMeshEntries.forEach(e => { e.mesh.visible = false; });
+    if (E._blindsGroup) E._blindsGroup.visible = false;
     markDirty();
   }
-  _showCurtainConfigPanel(curtainsVisible);
+  _showCurtainConfigPanel(E.curtainsVisible);
 }
 
 // Unified curtain entry builder for both room sections. The per-room deltas
@@ -818,7 +818,7 @@ function buildCurtainEntries(roomScene, opts) {
 
   // Keep the top-level curtain nodes and their base scale for sizing (scaling the
   // node about its own pivot keeps the curtain anchored, unlike scaling child meshes).
-  _curtainNodes = curtainNodes;
+  E._curtainNodes = curtainNodes;
   curtainNodes.forEach(n => { n.userData._curtainBaseScale = n.scale.clone(); });
 
   // Fix inverted panel normals — see _fixCurtainNormals for why this can happen.
@@ -830,8 +830,8 @@ function buildCurtainEntries(roomScene, opts) {
     const bb = new THREE.Box3();
     curtainNodes.forEach(n => bb.expandByObject(n));
     if (!bb.isEmpty()) {
-      _curtainBaseBox = { center: bb.getCenter(new THREE.Vector3()), size: bb.getSize(new THREE.Vector3()) };
-      _curtainFace = _avgWorldNormal(curtainNodes[0]).clone();
+      E._curtainBaseBox = { center: bb.getCenter(new THREE.Vector3()), size: bb.getSize(new THREE.Vector3()) };
+      E._curtainFace = _avgWorldNormal(curtainNodes[0]).clone();
     }
   }
 
@@ -849,7 +849,7 @@ function buildCurtainEntries(roomScene, opts) {
     const origMat = Array.isArray(child.material) ? child.material[0] : child.material;
     // Apply sharedGreyMat to the mesh NOW so highlights and drag feedback are visible
     child.material = sharedGreyMat;
-    curtainMeshEntries.push({
+    E.curtainMeshEntries.push({
       id: `curtain-${idx++}`,
       name: idx === 1 ? 'Curtains' : null,
       mesh: child,
@@ -863,9 +863,9 @@ function buildCurtainEntries(roomScene, opts) {
       _isCurtain: true,
     });
   });
-  if (curtainMeshEntries.length > 0) {
-    curtainMeshEntries[0].name = 'Curtains';
-    console.log(opts.builtMsg(curtainMeshEntries.length));
+  if (E.curtainMeshEntries.length > 0) {
+    E.curtainMeshEntries[0].name = 'Curtains';
+    console.log(opts.builtMsg(E.curtainMeshEntries.length));
   }
 }
 
@@ -879,7 +879,7 @@ function buildCurtainEntries(roomScene, opts) {
 //    If a model loads facing wrong way, flip FURNITURE_SLOTS rotY by PI.
 //
 // Sofa faces +Z naturally (confirmed in modelviewer) = rotY: 0
-// Chair faces -Z naturally so needs Math.PI to face camera
+// Chair faces -Z naturally so needs Math.PI to face E.camera
 // Room bounds: X:[-3,3], Z:[-2.35,2.35], floorY≈-1.32
 // Sofa natural size at rot=0: 2.48 × 1.21 (long along X, faces ±Z)
 // Chair: 0.8 × 0.82 (roughly square)
@@ -927,13 +927,13 @@ function _seatOnFloor(model, slotX, slotZ, rotY, slotScale) {
 // Called after room.glb loads AND after any model reload inside room mode
 function _placeFurnitureInRoom() {
   // ── Active model ────────────────────────────────────────────────────────
-  if (currentModel) {
+  if (E.currentModel) {
     const _fs = (appStore.getState().activeRoomSection === 'bedroom' && BEDROOM_SLOTS[appStore.getState().currentModelKey])
       ? BEDROOM_SLOTS : FURNITURE_SLOTS;
     const s = _fs[appStore.getState().currentModelKey];
-    if (s) _seatOnFloor(currentModel, s.x, s.z, s.rotY, s.scale || 1.0);
-    roomFurnitureModels[appStore.getState().currentModelKey] = currentModel;
-    if (!scene.getObjectById(currentModel.id)) scene.add(currentModel);
+    if (s) _seatOnFloor(E.currentModel, s.x, s.z, s.rotY, s.scale || 1.0);
+    roomFurnitureModels[appStore.getState().currentModelKey] = E.currentModel;
+    if (!E.scene.getObjectById(E.currentModel.id)) E.scene.add(E.currentModel);
   }
 
   // No companion in bedroom mode — only one bed shown at a time
@@ -947,13 +947,13 @@ function _placeFurnitureInRoom() {
   if (roomFurnitureModels[otherKey]) {
     // Already loaded — just reposition
     const other = roomFurnitureModels[otherKey];
-    if (!scene.getObjectById(other.id)) scene.add(other);
+    if (!E.scene.getObjectById(other.id)) E.scene.add(other);
     _seatOnFloor(other, os.x, os.z, os.rotY, os.scale || 1.0);
   } else {
     // Load companion fresh
-    const _compGen = _roomLoadGen;
-    gltfLoader.load(otherUrl, gltf => {
-      if (_roomLoadGen !== _compGen) return; // room changed while companion loaded
+    const _compGen = E._roomLoadGen;
+    E.gltfLoader.load(otherUrl, gltf => {
+      if (E._roomLoadGen !== _compGen) return; // room changed while companion loaded
       if (roomFurnitureModels[otherKey]) return;
       const m = gltf.scene;
 
@@ -964,7 +964,7 @@ function _placeFurnitureInRoom() {
       m.updateMatrixWorld(true);
 
       roomFurnitureModels[otherKey] = m;
-      if (!scene.getObjectById(m.id)) scene.add(m);
+      if (!E.scene.getObjectById(m.id)) E.scene.add(m);
       _seatOnFloor(m, os.x, os.z, os.rotY, os.scale || 1.0);
 
       // Re-apply any saved fabric snapshot for the companion
@@ -975,7 +975,7 @@ function _placeFurnitureInRoom() {
   }
 }
 
-// Apply a saved material snapshot to a raw gltf scene (companion model)
+// Apply a saved material snapshot to a raw gltf E.scene (companion model)
 function _applySnapshotToModel(model, key) {
   const snap = modelMaterialSnapshots[key];
   if (!snap || !snap.length) return;
@@ -998,9 +998,9 @@ function _applySnapshotToModel(model, key) {
 
 function removeRoom() {
   // Exit move mode first
-  if (furnitureMoveMode) {
-    furnitureMoveMode = false;
-    if (transformControls) { transformControls.detach(); transformControls.visible = false; }
+  if (E.furnitureMoveMode) {
+    E.furnitureMoveMode = false;
+    if (E.transformControls) { E.transformControls.detach(); E.transformControls.visible = false; }
     const bar = document.getElementById('move-mode-bar');
     if (bar) bar.classList.remove('active');
     const hud = document.getElementById('move-hud');
@@ -1010,14 +1010,14 @@ function removeRoom() {
   // Clean up curtain entries
   _removeCurtainEntries();
 
-  if (roomGroup) { scene.remove(roomGroup); roomGroup = null; }
+  if (E.roomGroup) { E.scene.remove(E.roomGroup); E.roomGroup = null; }
   Object.keys(roomElements).forEach(k => roomElements[k] = null);
 
-  // Remove companion furniture from scene but KEEP currentModel so product-view
+  // Remove companion furniture from E.scene but KEEP E.currentModel so product-view
   // can still use it. Keep all refs in roomFurnitureModels for fast re-entry.
   Object.keys(roomFurnitureModels).forEach(k => {
     if (k !== appStore.getState().currentModelKey && roomFurnitureModels[k]) {
-      scene.remove(roomFurnitureModels[k]);
+      E.scene.remove(roomFurnitureModels[k]);
     }
   });
 
@@ -1074,7 +1074,7 @@ function setRoomSection(section) {
     document.getElementById('rsec-'+s).classList.toggle('active', s===section);
     document.getElementById('rsec-'+s+'-content').classList.toggle('active', s===section);
   });
-  if (furnitureMoveMode) toggleMoveMode();
+  if (E.furnitureMoveMode) toggleMoveMode();
   const lbl = document.getElementById('piece-list-label');
   if (lbl) lbl.textContent = section === 'bedroom' ? 'Bed Parts' : 'Furniture Parts';
 
@@ -1083,7 +1083,7 @@ function setRoomSection(section) {
   _syncProductTabLock();
 
   if (section === 'bedroom') {
-    ['chair','sofa'].forEach(k => { if(roomFurnitureModels[k]) scene.remove(roomFurnitureModels[k]); });
+    ['chair','sofa'].forEach(k => { if(roomFurnitureModels[k]) E.scene.remove(roomFurnitureModels[k]); });
     const bedKey = (appStore.getState().currentModelKey==='bed_wooden'||appStore.getState().currentModelKey==='bed_fabric') ? appStore.getState().currentModelKey : 'bed_wooden';
     if (appStore.getState().currentModelKey !== bedKey) {
       setModelKey(bedKey);
@@ -1094,20 +1094,20 @@ function setRoomSection(section) {
       if (_bt) _bt.classList.toggle('active', bedKey === 'bed_fabric');
     }
     buildBedroomRoom(() => {
-      sph = {theta: Math.PI, phi: 1.1, r: 9.0};
-      tgt.set(0, 0, 0);
+      E.sph = {theta: Math.PI, phi: 1.1, r: 9.0};
+      E.tgt.set(0, 0, 0);
       camUpdate();
     });
   } else {
-    ['bed_wooden','bed_fabric'].forEach(k => { if(roomFurnitureModels[k]) scene.remove(roomFurnitureModels[k]); });
+    ['bed_wooden','bed_fabric'].forEach(k => { if(roomFurnitureModels[k]) E.scene.remove(roomFurnitureModels[k]); });
     const livingKey = (appStore.getState().currentModelKey==='chair'||appStore.getState().currentModelKey==='sofa') ? appStore.getState().currentModelKey : 'chair';
     if (appStore.getState().currentModelKey !== livingKey) {
       setModelKey(livingKey);
       buildLibrary(); updateProductInfo();
     }
     buildRoom(() => {
-      sph = {theta: 0.05 + Math.PI, phi: 1.15, r: 7.0};
-      tgt.set(0, -0.3, 0);
+      E.sph = {theta: 0.05 + Math.PI, phi: 1.15, r: 7.0};
+      E.tgt.set(0, -0.3, 0);
       camUpdate();
     });
   }
@@ -1115,18 +1115,18 @@ function setRoomSection(section) {
 
 // ── Furniture Move Mode ──────────────────────────────────────────────────
 function toggleMoveMode() {
-  furnitureMoveMode = !furnitureMoveMode;
+  E.furnitureMoveMode = !E.furnitureMoveMode;
   const bar = document.getElementById('move-mode-bar');
-  if (bar) bar.classList.toggle('active', furnitureMoveMode);
+  if (bar) bar.classList.toggle('active', E.furnitureMoveMode);
   const hud = document.getElementById('move-hud');
-  if (hud) hud.classList.toggle('active', furnitureMoveMode);
+  if (hud) hud.classList.toggle('active', E.furnitureMoveMode);
   // Keep TC detached/hidden — we use the custom HUD instead
-  if (transformControls) { transformControls.detach(); transformControls.visible = false; }
+  if (E.transformControls) { E.transformControls.detach(); E.transformControls.visible = false; }
   markDirty();
 }
 
 function setMoveMode(mode) {
-  tcMode = mode;
+  E.tcMode = mode;
   ['translate','rotate'].forEach(m => {
     const el = document.getElementById('mm-'+m);
     if (el) el.classList.toggle('active', m===mode);
@@ -1154,37 +1154,37 @@ function rotateFurnitureY(deg) {
 // ── Curtain mesh helpers ─────────────────────────────────────────────────
 function _removeCurtainEntries() {
   // Restore original materials on curtain meshes
-  curtainMeshEntries.forEach(e => {
+  E.curtainMeshEntries.forEach(e => {
     const arr = Array.isArray(e.mesh.material) ? [...e.mesh.material] : [e.mesh.material];
     arr[e.matIndex] = e.origMat;
     e.mesh.material = arr;
   });
-  curtainMeshEntries = [];
-  _curtainNodes = [];
-  _disposeBlinds(); _curtainBaseBox = null; _curtainFace = null;
-  // Remove curtain entries from meshEntries
-  meshEntries = meshEntries.filter(e => !e._isCurtain);
+  E.curtainMeshEntries = [];
+  E._curtainNodes = [];
+  _disposeBlinds(); E._curtainBaseBox = null; E._curtainFace = null;
+  // Remove curtain entries from E.meshEntries
+  E.meshEntries = E.meshEntries.filter(e => !e._isCurtain);
   _showCurtainConfigPanel(false);
 }
 
 // ── Explode ───────────────────────────────────────────────────────────────
 function updateExplode(val) {
-  explodeVal = val;
+  E.explodeVal = val;
   const el = document.getElementById('v-explode'); if(el) el.textContent=val.toFixed(1);
   const slider = document.getElementById('s-explode'); if(slider) slider.value=val;
-  if(!currentModel || !meshEntries.length) return;
+  if(!E.currentModel || !E.meshEntries.length) return;
 
   // compute model center
-  const modelBox = new THREE.Box3().setFromObject(currentModel);
+  const modelBox = new THREE.Box3().setFromObject(E.currentModel);
   const center = modelBox.getCenter(new THREE.Vector3());
 
-  meshEntries.forEach((entry,i)=>{
+  E.meshEntries.forEach((entry,i)=>{
     // Direction = mesh center relative to model center
     const mBox = new THREE.Box3().setFromObject(entry.mesh);
     const mc = mBox.getCenter(new THREE.Vector3());
     const dir = mc.clone().sub(center).normalize();
     if(dir.length()===0) dir.set(0,1,0);
-    // Apply in local space: move mesh by dir * explodeVal * scale
+    // Apply in local space: move mesh by dir * E.explodeVal * scale
     const offset = dir.multiplyScalar(val*0.8);
     // We store original local position
     if(!entry._origLocalPos) entry._origLocalPos = entry.mesh.position.clone();
@@ -1194,18 +1194,18 @@ function updateExplode(val) {
 }
 
 function animateExplode() {
-  if(explodeAnim) return;
-  const start = explodeVal;
+  if(E.explodeAnim) return;
+  const start = E.explodeVal;
   const target = start < 0.5 ? 1.0 : 0.0;
   const duration = 1200;
   const startTime = performance.now();
-  explodeAnim = requestAnimationFrame(function tick(now) {
+  E.explodeAnim = requestAnimationFrame(function tick(now) {
     const t = Math.min((now-startTime)/duration, 1);
     const ease = t<0.5 ? 2*t*t : -1+(4-2*t)*t;
     const val = start + (target-start)*ease;
     updateExplode(val);
-    if(t<1) { explodeAnim=requestAnimationFrame(tick); }
-    else { explodeAnim=null; }
+    if(t<1) { E.explodeAnim=requestAnimationFrame(tick); }
+    else { E.explodeAnim=null; }
   });
 }
 

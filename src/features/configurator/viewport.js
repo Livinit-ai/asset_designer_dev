@@ -20,7 +20,7 @@ function updateProductInfo() {
 
 function _updateZoneCountBadge() {
   const el = document.getElementById('zone-count-badge');
-  if(el) el.textContent = meshEntries.length + ' configurable zone' + (meshEntries.length !== 1 ? 's' : '');
+  if(el) el.textContent = E.meshEntries.length + ' configurable zone' + (E.meshEntries.length !== 1 ? 's' : '');
 }
 
 // ── Zone overlay (floating labels on viewport) ──────────────────────────────
@@ -31,9 +31,9 @@ function rebuildZoneOverlay() {
   if(!overlay) return;
   overlay.innerHTML = '';
   _zoneLabelsReady = false;
-  if(!meshEntries.length) { _updateZoneCountBadge(); return; }
+  if(!E.meshEntries.length) { _updateZoneCountBadge(); return; }
 
-  meshEntries.forEach(entry => {
+  E.meshEntries.forEach(entry => {
     const label = document.createElement('div');
     label.className = 'zone-label';
     label.dataset.eid = entry.id;
@@ -49,11 +49,11 @@ function rebuildZoneOverlay() {
 }
 
 function _zoneClick(entryId) {
-  const target = meshEntries.find(e => e.id === entryId);
+  const target = E.meshEntries.find(e => e.id === entryId);
   if(!target) return;
-  const wasSoleSelected = target.checked && meshEntries.filter(e => e.checked).length === 1;
+  const wasSoleSelected = target.checked && E.meshEntries.filter(e => e.checked).length === 1;
   // Deselect all — leave mesh.material untouched so applied fabrics stay visible
-  meshEntries.forEach(entry => { entry.checked = false; });
+  E.meshEntries.forEach(entry => { entry.checked = false; });
   if(!wasSoleSelected) {
     // Select just this one
     target.checked = true;
@@ -70,13 +70,13 @@ function _zoneClick(entryId) {
 
 function _refreshZoneLabelStates() {
   document.querySelectorAll('#zone-overlay .zone-label').forEach(l => {
-    const entry = meshEntries.find(e => e.id === l.dataset.eid);
+    const entry = E.meshEntries.find(e => e.id === l.dataset.eid);
     l.classList.toggle('active', !!(entry && entry.checked));
   });
 }
 
 function updateZoneLabelPositions() {
-  if(!_zoneLabelsReady || !camera || !renderer) return;
+  if(!_zoneLabelsReady || !E.camera || !E.renderer) return;
   const overlay = document.getElementById('zone-overlay');
   if(!overlay || overlay.style.display === 'none') return;
   const canvas = document.getElementById('viewer');
@@ -84,13 +84,13 @@ function updateZoneLabelPositions() {
   const W = canvas.clientWidth, H = canvas.clientHeight;
   if(W === 0 || H === 0) return;
 
-  meshEntries.forEach((entry) => {
+  E.meshEntries.forEach((entry) => {
     const label = overlay.querySelector(`.zone-label[data-eid="${entry.id}"]`);
     if(!label) return;
     try {
       const box = new THREE.Box3().setFromObject(entry.mesh);
       const center = box.getCenter(new THREE.Vector3());
-      const projected = center.clone().project(camera);
+      const projected = center.clone().project(E.camera);
       if(projected.z >= 1) { label.style.opacity = '0'; return; }
 
       const sx = (projected.x * 0.5 + 0.5) * W;
@@ -121,31 +121,31 @@ function updateZoneLabelPositions() {
 
 // ── Three.js Init ─────────────────────────────────────────────────────────
 function camUpdate() {
-  camera.position.set(
-    tgt.x + sph.r*Math.sin(sph.phi)*Math.sin(sph.theta),
-    tgt.y + sph.r*Math.cos(sph.phi),
-    tgt.z + sph.r*Math.sin(sph.phi)*Math.cos(sph.theta)
+  E.camera.position.set(
+    E.tgt.x + E.sph.r*Math.sin(E.sph.phi)*Math.sin(E.sph.theta),
+    E.tgt.y + E.sph.r*Math.cos(E.sph.phi),
+    E.tgt.z + E.sph.r*Math.sin(E.sph.phi)*Math.cos(E.sph.theta)
   );
-  camera.lookAt(tgt);
+  E.camera.lookAt(E.tgt);
   markDirty();
 }
 
 function initThree() {
   const canvas = document.getElementById('viewer');
-  renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,preserveDrawingBuffer:true});
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.outputEncoding=THREE.sRGBEncoding;
-  renderer.physicallyCorrectLights=true;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure=1.0;
-  renderer.shadowMap.enabled=true;
+  E.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,preserveDrawingBuffer:true});
+  E.renderer.setPixelRatio(window.devicePixelRatio);
+  E.renderer.outputEncoding=THREE.sRGBEncoding;
+  E.renderer.physicallyCorrectLights=true;
+  E.renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  E.renderer.toneMappingExposure=1.0;
+  E.renderer.shadowMap.enabled=true;
 
-  scene=new THREE.Scene();
-  camera=new THREE.PerspectiveCamera(42,1,0.01,1000);
+  E.scene=new THREE.Scene();
+  E.camera=new THREE.PerspectiveCamera(42,1,0.01,1000);
 
-  pmremGen=new THREE.PMREMGenerator(renderer);
-  pmremGen.compileEquirectangularShader();
-  scene.environment=pmremGen.fromScene(new THREE.RoomEnvironment(),1.0).texture;
+  E.pmremGen=new THREE.PMREMGenerator(E.renderer);
+  E.pmremGen.compileEquirectangularShader();
+  E.scene.environment=E.pmremGen.fromScene(new THREE.RoomEnvironment(),1.0).texture;
 
   const amb=new THREE.AmbientLight(0xffffff,0.3);
   const dir=new THREE.DirectionalLight(0xfff8f0,1.8);
@@ -153,7 +153,7 @@ function initThree() {
   const hemi=new THREE.HemisphereLight(0xfff8f0,0x8090a0,0.6);
   const fill=new THREE.DirectionalLight(0xd0e8ff,0.8);
   fill.position.set(-3,3,-4);
-  scene.add(amb,dir,hemi,fill);
+  E.scene.add(amb,dir,hemi,fill);
 
   camUpdate();
 
@@ -165,13 +165,13 @@ function initThree() {
   const _floorOffset=new THREE.Vector3(); // offset from model centre to hit point
 
   canvas.addEventListener('mousedown',e=>{
-    if(dragActive) return;
-    if(furnitureMoveMode && e.button===0) {
+    if(E.dragActive) return;
+    if(E.furnitureMoveMode && e.button===0) {
       // Custom floor-drag: check if we hit the active furniture model
       const rect=canvas.getBoundingClientRect();
       const ndc=screenToNDC(e,rect);
       mouse.set(ndc.x,ndc.y);
-      raycaster.setFromCamera(mouse,camera);
+      raycaster.setFromCamera(mouse,E.camera);
       const model=roomFurnitureModels[appStore.getState().currentModelKey];
       if(model){
         const hits=raycaster.intersectObject(model,true);
@@ -195,7 +195,7 @@ function initThree() {
       const rect=canvas.getBoundingClientRect();
       const ndc=screenToNDC(e,rect);
       mouse.set(ndc.x,ndc.y);
-      raycaster.setFromCamera(mouse,camera);
+      raycaster.setFromCamera(mouse,E.camera);
       if(raycaster.ray.intersectPlane(_floorPlane,_floorHit)){
         const model=roomFurnitureModels[appStore.getState().currentModelKey];
         if(model){
@@ -214,12 +214,12 @@ function initThree() {
     const dx=e.clientX-prev.x,dy=e.clientY-prev.y;
     prev={x:e.clientX,y:e.clientY};
     if(isRight){
-      const spd=0.002*sph.r;
-      const right=new THREE.Vector3().crossVectors(camera.getWorldDirection(new THREE.Vector3()),camera.up).normalize();
-      tgt.addScaledVector(right,-dx*spd); tgt.addScaledVector(camera.up,dy*spd);
+      const spd=0.002*E.sph.r;
+      const right=new THREE.Vector3().crossVectors(E.camera.getWorldDirection(new THREE.Vector3()),E.camera.up).normalize();
+      E.tgt.addScaledVector(right,-dx*spd); E.tgt.addScaledVector(E.camera.up,dy*spd);
     } else {
-      sph.theta-=dx*0.007;
-      sph.phi=Math.max(0.1,Math.min(Math.PI-0.1,sph.phi-dy*0.007));
+      E.sph.theta-=dx*0.007;
+      E.sph.phi=Math.max(0.1,Math.min(Math.PI-0.1,E.sph.phi-dy*0.007));
     }
     camUpdate();
   });
@@ -231,12 +231,12 @@ function initThree() {
     const rect = canvas.getBoundingClientRect();
     const ndc = screenToNDC(e, rect);
     mouse.set(ndc.x, ndc.y);
-    raycaster.setFromCamera(mouse, camera);
+    raycaster.setFromCamera(mouse, E.camera);
 
-    if (furnitureMoveMode) {
+    if (E.furnitureMoveMode) {
       // Second double-click anywhere exits move mode
-      furnitureMoveMode = false;
-      if (transformControls) { transformControls.detach(); transformControls.visible = false; }
+      E.furnitureMoveMode = false;
+      if (E.transformControls) { E.transformControls.detach(); E.transformControls.visible = false; }
       const bar = document.getElementById('move-mode-bar');
       if (bar) bar.classList.remove('active');
       const hud = document.getElementById('move-hud');
@@ -268,37 +268,37 @@ function initThree() {
     if (hitKey !== appStore.getState().currentModelKey) switchModel(hitKey);
 
     // Enter move mode — use custom HUD, no TC gizmo
-    furnitureMoveMode = true;
+    E.furnitureMoveMode = true;
     const bar = document.getElementById('move-mode-bar');
     if (bar) bar.classList.add('active');
     const hud = document.getElementById('move-hud');
     if (hud) hud.classList.add('active');
-    if (transformControls) { transformControls.detach(); transformControls.visible = false; }
+    if (E.transformControls) { E.transformControls.detach(); E.transformControls.visible = false; }
     markDirty();
   });
 
   canvas.addEventListener('contextmenu',e=>e.preventDefault());
-  canvas.addEventListener('wheel',e=>{sph.r=Math.max(0.3,Math.min(30,sph.r+e.deltaY*0.004));camUpdate();e.preventDefault();},{passive:false});
+  canvas.addEventListener('wheel',e=>{E.sph.r=Math.max(0.3,Math.min(30,E.sph.r+e.deltaY*0.004));camUpdate();e.preventDefault();},{passive:false});
 
   const ro=new ResizeObserver(()=>{
     const w=canvas.clientWidth,h=canvas.clientHeight;
-    renderer.setSize(w,h,false);
-    camera.aspect=w/h; camera.updateProjectionMatrix(); markDirty();
+    E.renderer.setSize(w,h,false);
+    E.camera.aspect=w/h; E.camera.updateProjectionMatrix(); markDirty();
   });
   ro.observe(canvas);
 
   (function loop(){
     requestAnimationFrame(loop);
-    if(!_dirty)return;
-    _dirty=false;
-    renderer.render(scene,camera);
+    if(!E._dirty)return;
+    E._dirty=false;
+    E.renderer.render(E.scene,E.camera);
     updateZoneLabelPositions();
   })();
 
   const dracoLoader=new THREE.DRACOLoader();
   dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
-  gltfLoader=new THREE.GLTFLoader();
-  gltfLoader.setDRACOLoader(dracoLoader);
+  E.gltfLoader=new THREE.GLTFLoader();
+  E.gltfLoader.setDRACOLoader(dracoLoader);
 }
 
 function loadScripts(urls){

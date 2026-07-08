@@ -234,8 +234,8 @@ async function previewAnalyzedOnModel() {
     hex: F.analyzed?.hex || '#c8c0b8', vendor:'custom', series:'My Fabrics',
     _defaults: { ...aiProps, diffUrl: dataUrl },
   };
-  const checked = meshEntries.filter(e => e.checked);
-  const previewTargets = checked.length ? checked : meshEntries.filter(e => !e._isCurtain);
+  const checked = E.meshEntries.filter(e => e.checked);
+  const previewTargets = checked.length ? checked : E.meshEntries.filter(e => !e._isCurtain);
   if (previewTargets.length) await applySwatchToEntries(previewItem, previewTargets);
 
   setFinder({ pendingUploadPreview: { name, type, aiProps, diffUrl: dataUrl }, pendingResult: null });
@@ -549,7 +549,7 @@ async function trySelectedOnModel() {
     vendor:'custom', series:'My Fabrics',
     _defaults: { roughness:0.72, sheen:0.1, metalness:0.0, scale:10.0, norm:1.0, diffUrl, normUrl, roughUrl },
   };
-  const checked = meshEntries.filter(e => e.checked);
+  const checked = E.meshEntries.filter(e => e.checked);
   if (checked.length) {
     await applySwatchToEntries(previewItem, checked);
   }

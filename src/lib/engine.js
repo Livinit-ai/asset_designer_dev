@@ -3,8 +3,21 @@
 // global scope across all src/*.js files, preserving original semantics.
 // ── App State ─────────────────────────────────────────────────────────────
 // currentModelKey / roomMode / activeRoomSection live in appStore — see src/store.js.
-let meshEntries = [];
-let currentModel = null;
+// Shared mutable engine state. ES modules can't rebind imported bindings and
+// 23 of these are reassigned from other modules, so they live as properties of
+// one exported holder (Task 3 adds `export`). Reassign via E.x = …, read via E.x.
+const E = {
+  meshEntries: [], currentModel: null, _dirty: true, roomGroup: null,
+  _roomLoadGen: 0, explodeVal: 0, explodeAnim: null, transformControls: null,
+  furnitureMoveMode: false, tcMode: 'translate', curtainMeshEntries: [],
+  _curtainNodes: [], _blindsGroup: null, _curtainBaseBox: null, _curtainFace: null,
+  curtainsVisible: true, _curtainNormTex: null, _curtainLinColor: null,
+  dragItem: null, dragActive: false,
+  ghost: document.getElementById('drag-ghost'),
+  ghostImg: document.getElementById('drag-ghost-img'),
+  renderer: null, scene: null, camera: null, pmremGen: null, gltfLoader: null,
+  sph: { theta: 0.4, phi: 1.15, r: 2.2 }, tgt: new THREE.Vector3(),
+};
 // Pre-parsed GLB scenes keyed by URL — cloned on each use so processGLTF gets a fresh hierarchy
 const _gltfSceneCache = {};
 // Room mode holds both chair + sofa simultaneously
@@ -22,34 +35,11 @@ const enhanceCache = {}; // diffSrc → AI-enhanced data URL (session cache)
 const texLoader = new THREE.TextureLoader();
 texLoader.setCrossOrigin('anonymous');
 
-// Three.js refs
-let renderer, scene, camera, pmremGen, gltfLoader;
-let sph = {theta:0.4, phi:1.15, r:2.2};
-let tgt = new THREE.Vector3();
-let _dirty = true;
-function markDirty(){ _dirty = true; }
+function markDirty(){ E._dirty = true; }
 
 // ── Room state ─────────────────────────────────────────────────────────────
-let roomGroup = null;
-let _roomLoadGen = 0; // increments on each new room build; callbacks use this to detect stale loads
 let roomElements = {walls:null, floor:null, windows:null, doors:null, rug:null, ceiling:null};
 let roomVisible = {walls:true, floor:true, windows:true, doors:true, rug:true, ceiling:false};
-let explodeVal = 0;
-let explodeAnim = null;
-
-
-// TransformControls (furniture move mode)
-let transformControls = null;
-let furnitureMoveMode = false;
-let tcMode = 'translate';
-
-// Curtain mesh entries (added to meshEntries when room loads)
-let curtainMeshEntries = [];
-let _curtainNodes = []; // top-level curtain GLB nodes — scaled for sizing
-let _blindsGroup = null;     // procedural venetian-blinds group (shape==='blinds')
-let _curtainBaseBox = null;  // {center,size} of curtains at base scale — anchors blinds
-let _curtainFace = null;     // room-facing normal — orients blinds slats
-let curtainsVisible = true;  // shared visibility flag for whichever room's curtains are active
 
 // ── Curtain configurator data ─────────────────────────────────────────────
 const CURTAIN_FABRICS = [
@@ -91,7 +81,7 @@ const CURTAIN_FABRICS = [
     roughFallback:[SB+'cotton_fabric/Roughness.jpg',SB+'cotton_fabric/Roughness.webp'], recommend:['#1C2733','#2B2B2B','#36454F','#3A2C2A'] },
 ];
 // curtainState / savedCurtainState live in appStore — see src/store.js.
-let _curtainNormTex = null, _curtainRoughTex = null;
+let _curtainRoughTex = null;
 
 const CURTAIN_COLORS = [
   { hex:'#EDE6D8', label:'Cream'   },
@@ -131,23 +121,17 @@ const CURTAIN_COLOR_GROUPS = [
 // treats a material's .color as LINEAR, so an sRGB hex assigned raw is gamma-encoded TWICE on
 // output → the fabric renders pale and desaturated. Convert sRGB→linear here so the rendered
 // colour round-trips to the true chip hue. `scalar` optionally darkens (rails/pleat/sheen).
-function _curtainLinColor(hex, scalar) {
+E._curtainLinColor = function(hex, scalar) {
   const c = new THREE.Color(hex).convertSRGBToLinear();
   if (scalar !== undefined) c.multiplyScalar(scalar);
   return c;
-}
+};
 
 // Piece system (room mode per-mesh fabric targeting)
 
 // Raycaster for drag-drop
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
-
-// ── Drag state ────────────────────────────────────────────────────────────
-let dragItem = null;   // {gi, ii, item}
-let dragActive = false;
-const ghost = document.getElementById('drag-ghost');
-const ghostImg = document.getElementById('drag-ghost-img');
 
 // ── Utilities ─────────────────────────────────────────────────────────────
 // Escape untrusted strings before interpolating into innerHTML. Required for
@@ -245,7 +229,7 @@ async function getPolyMaps(polyId) {
 // Save the current model's materials so room view / model switching restores them.
 // Single implementation — was copy-pasted at five call sites.
 function saveMaterialSnapshot() {
-  modelMaterialSnapshots[appStore.getState().currentModelKey] = meshEntries.map(e => ({
+  modelMaterialSnapshots[appStore.getState().currentModelKey] = E.meshEntries.map(e => ({
     id: e.id, name: e.name, matClone: e.greyMat.clone(),
   }));
 }
