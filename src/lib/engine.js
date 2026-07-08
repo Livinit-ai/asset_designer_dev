@@ -17,13 +17,14 @@ const E = {
   ghostImg: document.getElementById('drag-ghost-img'),
   renderer: null, scene: null, camera: null, pmremGen: null, gltfLoader: null,
   sph: { theta: 0.4, phi: 1.15, r: 2.2 }, tgt: new THREE.Vector3(),
+  modelMaterialSnapshots: { chair: null, sofa: null, bed_wooden: null, bed_fabric: null },
+  _curtainRoughTex: null,
 };
 // Pre-parsed GLB scenes keyed by URL — cloned on each use so processGLTF gets a fresh hierarchy
 const _gltfSceneCache = {};
 // Room mode holds both chair + sofa simultaneously
 let roomFurnitureModels = { chair: null, sofa: null, bed_wooden: null, bed_fabric: null };
-// Snapshot of mesh materials per model key — survives model switching
-let modelMaterialSnapshots = { chair: null, sofa: null, bed_wooden: null, bed_fabric: null };
+// Snapshot of mesh materials per model key — survives model switching (E.modelMaterialSnapshots)
 // activeBtnEl → appStore.activeFabricKey (see src/store.js); lastAppliedItem
 // was write-only (zero readers since the original upload) and was removed.
 
@@ -80,8 +81,7 @@ const CURTAIN_FABRICS = [
     normFallback: [SB+'cotton_fabric/Normal.jpg', SB+'cotton_fabric/Normal.webp'],
     roughFallback:[SB+'cotton_fabric/Roughness.jpg',SB+'cotton_fabric/Roughness.webp'], recommend:['#1C2733','#2B2B2B','#36454F','#3A2C2A'] },
 ];
-// curtainState / savedCurtainState live in appStore — see src/store.js.
-let _curtainRoughTex = null;
+// curtainState / savedCurtainState live in appStore — see src/store.js. (E._curtainRoughTex)
 
 const CURTAIN_COLORS = [
   { hex:'#EDE6D8', label:'Cream'   },
@@ -229,7 +229,7 @@ async function getPolyMaps(polyId) {
 // Save the current model's materials so room view / model switching restores them.
 // Single implementation — was copy-pasted at five call sites.
 function saveMaterialSnapshot() {
-  modelMaterialSnapshots[appStore.getState().currentModelKey] = E.meshEntries.map(e => ({
+  E.modelMaterialSnapshots[appStore.getState().currentModelKey] = E.meshEntries.map(e => ({
     id: e.id, name: e.name, matClone: e.greyMat.clone(),
   }));
 }

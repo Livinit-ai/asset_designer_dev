@@ -494,7 +494,7 @@ async function _applyCurtainMaterial() {
 
   if (E._roomLoadGen !== _gen) return; // room was switched while textures loaded
   E._curtainNormTex  = normTex;
-  _curtainRoughTex = roughTex;
+  E._curtainRoughTex = roughTex;
 
   const mat = _buildCurtainMat(normTex, roughTex, diffTex);
   E.curtainMeshEntries.forEach(e => { e.mesh.material = mat; });
@@ -977,7 +977,7 @@ function _placeFurnitureInRoom() {
 
 // Apply a saved material snapshot to a raw gltf E.scene (companion model)
 function _applySnapshotToModel(model, key) {
-  const snap = modelMaterialSnapshots[key];
+  const snap = E.modelMaterialSnapshots[key];
   if (!snap || !snap.length) return;
   let si = 0;
   model.traverse(child => {

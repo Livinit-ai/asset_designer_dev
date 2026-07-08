@@ -251,7 +251,7 @@ function processGLTF(gltf) {
     }
     // Room mode: E.camera stays, _placeFurnitureInRoom sets positions
     // Restore previously saved material snapshot for this model key
-    const snap = modelMaterialSnapshots[appStore.getState().currentModelKey];
+    const snap = E.modelMaterialSnapshots[appStore.getState().currentModelKey];
     if(snap && snap.length > 0) {
       snap.forEach((s, si) => {
         if(si < E.meshEntries.length) {
@@ -499,7 +499,7 @@ function _rebuildMeshEntries(model, modelKey) {
 function resetAll() {
   deselectAll();
   // Clear ALL snapshots on reset — every model key, not just chair/sofa
-  modelMaterialSnapshots = { chair: null, sofa: null, bed_wooden: null, bed_fabric: null };
+  E.modelMaterialSnapshots = { chair: null, sofa: null, bed_wooden: null, bed_fabric: null };
   setActiveFabric(null); renderActiveSwatch();
   document.getElementById('app-name').textContent='— none —';
   document.getElementById('app-vend').textContent='';
