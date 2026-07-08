@@ -17,6 +17,9 @@ function toggleRoomView() {
 
   document.getElementById('panel-product').style.display = appStore.getState().roomMode ? 'none' : 'flex';
   document.getElementById('panel-room').style.display    = appStore.getState().roomMode ? 'flex' : 'none';
+  // Room controls now live in a floating glass tray over the canvas; show it in room mode only.
+  const _roomTray = document.getElementById('room-tray');
+  if(_roomTray) _roomTray.classList.toggle('on', appStore.getState().roomMode);
 
   if(appStore.getState().roomMode) {
     // Save snapshot of current model's fabric state before entering room

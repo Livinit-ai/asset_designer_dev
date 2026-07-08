@@ -137,6 +137,61 @@
             Zoom In
           </button>
         </div>
+
+        <!-- Floating room controls — glass overlay, shown in room mode only -->
+        <div id="room-tray">
+          <div class="room-sec-strip">
+            <button class="room-sec-btn active" id="rsec-living" onclick="setRoomSection('living')">
+              <span style="display:block;font-size:14px;margin-bottom:1px">🛋</span>
+              Living Room
+            </button>
+            <button class="room-sec-btn" id="rsec-bedroom" onclick="setRoomSection('bedroom')">
+              <span style="display:block;font-size:14px;margin-bottom:1px">🛏</span>
+              Bedroom
+            </button>
+          </div>
+
+          <div id="rsec-living-content" class="room-sec-content active">
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Room Elements
+              </div>
+              <div class="room-chips-grid">
+                <button class="room-chip on" id="chip-walls" onclick="toggleRoomEl('walls')"><span class="room-chip-ico">🧱</span>Walls</button>
+                <button class="room-chip on" id="chip-floor" onclick="toggleRoomEl('floor')"><span class="room-chip-ico">⬛</span>Floor</button>
+                <button class="room-chip on" id="chip-windows" onclick="toggleRoomEl('windows')"><span class="room-chip-ico">🪟</span>Windows</button>
+                <button class="room-chip on" id="chip-doors" onclick="toggleRoomEl('doors')"><span class="room-chip-ico">🚪</span>Doors</button>
+                <button class="room-chip on" id="chip-rug" onclick="toggleRoomEl('rug')"><span class="room-chip-ico">🟫</span>Rug</button>
+                <button class="room-chip" id="chip-ceiling" onclick="toggleRoomEl('ceiling')"><span class="room-chip-ico">▫</span>Ceiling</button>
+                <button class="room-chip on" id="chip-curtains-living" onclick="toggleCurtains()"><span class="room-chip-ico">🪟</span>Curtains</button>
+              </div>
+            </div>
+          </div><!-- /living room content -->
+
+          <div id="rsec-bedroom-content" class="room-sec-content">
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Room Elements
+              </div>
+              <div class="room-chips-grid">
+                <button class="room-chip on" id="chip-curtains-bedroom" onclick="toggleCurtains()"><span class="room-chip-ico">🪟</span>Curtains</button>
+              </div>
+            </div>
+
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 9h20M7 3v18M17 3v18" stroke-linecap="round"/></svg>
+                Bed Style
+              </div>
+              <div class="room-chips-grid">
+                <button class="room-chip on" id="chip-bed-wooden" onclick="switchModel('bed_wooden')"><span class="room-chip-ico">🪵</span>Wooden</button>
+                <button class="room-chip" id="chip-bed-fabric" onclick="switchModel('bed_fabric')"><span class="room-chip-ico">🛏</span>Fabric</button>
+              </div>
+            </div>
+          </div><!-- /bedroom content -->
+        </div><!-- /room-tray -->
       </div>
 
       <!-- CONFIG PANEL (right) -->
@@ -213,61 +268,6 @@
 
         <!-- ROOM MODE -->
         <div id="panel-room" style="display:none">
-
-          <!-- Room Section Tabs -->
-          <div class="room-sec-strip">
-            <button class="room-sec-btn active" id="rsec-living" onclick="setRoomSection('living')">
-              <span style="display:block;font-size:14px;margin-bottom:1px">🛋</span>
-              Living Room
-            </button>
-            <button class="room-sec-btn" id="rsec-bedroom" onclick="setRoomSection('bedroom')">
-              <span style="display:block;font-size:14px;margin-bottom:1px">🛏</span>
-              Bedroom
-            </button>
-          </div>
-
-          <!-- Living Room content — section-specific chips only -->
-          <div id="rsec-living-content" class="room-sec-content active">
-            <div class="room-section-block">
-              <div class="room-section-label">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                Room Elements
-              </div>
-              <div class="room-chips-grid">
-                <button class="room-chip on" id="chip-walls" onclick="toggleRoomEl('walls')"><span class="room-chip-ico">🧱</span>Walls</button>
-                <button class="room-chip on" id="chip-floor" onclick="toggleRoomEl('floor')"><span class="room-chip-ico">⬛</span>Floor</button>
-                <button class="room-chip on" id="chip-windows" onclick="toggleRoomEl('windows')"><span class="room-chip-ico">🪟</span>Windows</button>
-                <button class="room-chip on" id="chip-doors" onclick="toggleRoomEl('doors')"><span class="room-chip-ico">🚪</span>Doors</button>
-                <button class="room-chip on" id="chip-rug" onclick="toggleRoomEl('rug')"><span class="room-chip-ico">🟫</span>Rug</button>
-                <button class="room-chip" id="chip-ceiling" onclick="toggleRoomEl('ceiling')"><span class="room-chip-ico">▫</span>Ceiling</button>
-                <button class="room-chip on" id="chip-curtains-living" onclick="toggleCurtains()"><span class="room-chip-ico">🪟</span>Curtains</button>
-              </div>
-            </div>
-          </div><!-- /living room content -->
-
-          <!-- Bedroom content -->
-          <div id="rsec-bedroom-content" class="room-sec-content">
-            <div class="room-section-block">
-              <div class="room-section-label">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                Room Elements
-              </div>
-              <div class="room-chips-grid">
-                <button class="room-chip on" id="chip-curtains-bedroom" onclick="toggleCurtains()"><span class="room-chip-ico">🪟</span>Curtains</button>
-              </div>
-            </div>
-
-            <div class="room-section-block">
-              <div class="room-section-label">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 9h20M7 3v18M17 3v18" stroke-linecap="round"/></svg>
-                Bed Style
-              </div>
-              <div class="room-chips-grid">
-                <button class="room-chip on" id="chip-bed-wooden" onclick="switchModel('bed_wooden')"><span class="room-chip-ico">🪵</span>Wooden</button>
-                <button class="room-chip" id="chip-bed-fabric" onclick="switchModel('bed_fabric')"><span class="room-chip-ico">🛏</span>Fabric</button>
-              </div>
-            </div>
-          </div><!-- /bedroom content -->
 
           <!-- Curtain configurator — shared across living room + bedroom, shown whenever
                the active room has curtain meshes and they're toggled visible -->
