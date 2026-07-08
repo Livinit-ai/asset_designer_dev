@@ -127,60 +127,7 @@
           </button>
         </div>
 
-        <!-- Floating room controls — glass overlay, shown in room mode only -->
-        <div id="room-tray">
-          <div class="room-sec-strip">
-            <button class="room-sec-btn active" id="rsec-living" onclick="setRoomSection('living')">
-              <span style="display:block;font-size:14px;margin-bottom:1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M2 13a2 2 0 0 1 4 0v3h12v-3a2 2 0 0 1 4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M6 19v2"/><path d="M18 19v2"/></svg></span>
-              Living Room
-            </button>
-            <button class="room-sec-btn" id="rsec-bedroom" onclick="setRoomSection('bedroom')">
-              <span style="display:block;font-size:14px;margin-bottom:1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v12"/><path d="M3 13h16a2 2 0 0 1 2 2v4"/><path d="M3 17h18"/><path d="M7 13v-3h5a3 3 0 0 1 3 3"/></svg></span>
-              Bedroom
-            </button>
-          </div>
-
-          <div id="rsec-living-content" class="room-sec-content active">
-            <div class="room-section-block">
-              <div class="room-section-label">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                Room Elements
-              </div>
-              <div class="room-chips-grid">
-                <button class="room-chip on" id="chip-walls" onclick="toggleRoomEl('walls')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18"/><path d="M3 16h18"/><path d="M9 4v6"/><path d="M15 10v6"/><path d="M9 16v4"/></svg></span>Walls</button>
-                <button class="room-chip on" id="chip-floor" onclick="toggleRoomEl('floor')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M6 20l1.5-9h9L18 20"/><path d="M7 15h10"/><path d="M9.5 11v9"/><path d="M14.5 11v9"/></svg></span>Floor</button>
-                <button class="room-chip on" id="chip-windows" onclick="toggleRoomEl('windows')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M4 12h16"/><path d="M12 3v18"/></svg></span>Windows</button>
-                <button class="room-chip on" id="chip-doors" onclick="toggleRoomEl('doors')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M4 21h16"/><circle cx="14" cy="12" r="1"/></svg></span>Doors</button>
-                <button class="room-chip on" id="chip-rug" onclick="toggleRoomEl('rug')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="10" rx="1"/><path d="M4 10h16"/><path d="M4 14h16"/><path d="M6 7l-1-2"/><path d="M18 7l1-2"/></svg></span>Rug</button>
-                <button class="room-chip" id="chip-ceiling" onclick="toggleRoomEl('ceiling')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18"/><path d="M8 5l-1 4"/><path d="M16 5l1 4"/><path d="M12 5v5"/></svg></span>Ceiling</button>
-                <button class="room-chip on" id="chip-curtains-living" onclick="toggleCurtains()"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16"/><path d="M6.5 3C6.5 9 5.5 15 3.5 21"/><path d="M17.5 3c0 6 1 12 3 18"/><path d="M12 3v13"/></svg></span>Curtains</button>
-              </div>
-            </div>
-          </div><!-- /living room content -->
-
-          <div id="rsec-bedroom-content" class="room-sec-content">
-            <div class="room-section-block">
-              <div class="room-section-label">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
-                Room Elements
-              </div>
-              <div class="room-chips-grid">
-                <button class="room-chip on" id="chip-curtains-bedroom" onclick="toggleCurtains()"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16"/><path d="M6.5 3C6.5 9 5.5 15 3.5 21"/><path d="M17.5 3c0 6 1 12 3 18"/><path d="M12 3v13"/></svg></span>Curtains</button>
-              </div>
-            </div>
-
-            <div class="room-section-block">
-              <div class="room-section-label">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 9h20M7 3v18M17 3v18" stroke-linecap="round"/></svg>
-                Bed Style
-              </div>
-              <div class="room-chips-grid">
-                <button class="room-chip on" id="chip-bed-wooden" onclick="switchModel('bed_wooden')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4.5" rx="1"/><path d="M3 8.5v11"/><path d="M21 8.5v11"/><path d="M3 14h18"/><path d="M3 19h18"/></svg></span>Wooden</button>
-                <button class="room-chip" id="chip-bed-fabric" onclick="switchModel('bed_fabric')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v12"/><path d="M3 13h16a2 2 0 0 1 2 2v4"/><path d="M3 17h18"/><path d="M7 13v-3h5a3 3 0 0 1 3 3"/></svg></span>Fabric</button>
-              </div>
-            </div>
-          </div><!-- /bedroom content -->
-        </div><!-- /room-tray -->
+        <!-- Room controls moved into the Room panel tab (Task 3) -->
       </div>
 
       <!-- CONFIG PANEL (right) -->
@@ -271,6 +218,57 @@
 
         <!-- ROOM TAB -->
         <div class="panel-tab-body" data-tab="room">
+          <div class="room-sec-strip">
+            <button class="room-sec-btn active" id="rsec-living" onclick="setRoomSection('living')">
+              <span style="display:block;font-size:14px;margin-bottom:1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M2 13a2 2 0 0 1 4 0v3h12v-3a2 2 0 0 1 4 0v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/><path d="M6 19v2"/><path d="M18 19v2"/></svg></span>
+              Living Room
+            </button>
+            <button class="room-sec-btn" id="rsec-bedroom" onclick="setRoomSection('bedroom')">
+              <span style="display:block;font-size:14px;margin-bottom:1px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v12"/><path d="M3 13h16a2 2 0 0 1 2 2v4"/><path d="M3 17h18"/><path d="M7 13v-3h5a3 3 0 0 1 3 3"/></svg></span>
+              Bedroom
+            </button>
+          </div>
+
+          <div id="rsec-living-content" class="room-sec-content active">
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Room Elements
+              </div>
+              <div class="room-chips-grid">
+                <button class="room-chip on" id="chip-walls" onclick="toggleRoomEl('walls')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 10h18"/><path d="M3 16h18"/><path d="M9 4v6"/><path d="M15 10v6"/><path d="M9 16v4"/></svg></span>Walls</button>
+                <button class="room-chip on" id="chip-floor" onclick="toggleRoomEl('floor')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M6 20l1.5-9h9L18 20"/><path d="M7 15h10"/><path d="M9.5 11v9"/><path d="M14.5 11v9"/></svg></span>Floor</button>
+                <button class="room-chip on" id="chip-windows" onclick="toggleRoomEl('windows')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M4 12h16"/><path d="M12 3v18"/></svg></span>Windows</button>
+                <button class="room-chip on" id="chip-doors" onclick="toggleRoomEl('doors')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v17"/><path d="M4 21h16"/><circle cx="14" cy="12" r="1"/></svg></span>Doors</button>
+                <button class="room-chip on" id="chip-rug" onclick="toggleRoomEl('rug')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7" width="16" height="10" rx="1"/><path d="M4 10h16"/><path d="M4 14h16"/><path d="M6 7l-1-2"/><path d="M18 7l1-2"/></svg></span>Rug</button>
+                <button class="room-chip" id="chip-ceiling" onclick="toggleRoomEl('ceiling')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18"/><path d="M8 5l-1 4"/><path d="M16 5l1 4"/><path d="M12 5v5"/></svg></span>Ceiling</button>
+                <button class="room-chip on" id="chip-curtains-living" onclick="toggleCurtains()"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16"/><path d="M6.5 3C6.5 9 5.5 15 3.5 21"/><path d="M17.5 3c0 6 1 12 3 18"/><path d="M12 3v13"/></svg></span>Curtains</button>
+              </div>
+            </div>
+          </div><!-- /living room content -->
+
+          <div id="rsec-bedroom-content" class="room-sec-content">
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+                Room Elements
+              </div>
+              <div class="room-chips-grid">
+                <button class="room-chip on" id="chip-curtains-bedroom" onclick="toggleCurtains()"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16"/><path d="M6.5 3C6.5 9 5.5 15 3.5 21"/><path d="M17.5 3c0 6 1 12 3 18"/><path d="M12 3v13"/></svg></span>Curtains</button>
+              </div>
+            </div>
+
+            <div class="room-section-block">
+              <div class="room-section-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 9h20M7 3v18M17 3v18" stroke-linecap="round"/></svg>
+                Bed Style
+              </div>
+              <div class="room-chips-grid">
+                <button class="room-chip on" id="chip-bed-wooden" onclick="switchModel('bed_wooden')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4.5" rx="1"/><path d="M3 8.5v11"/><path d="M21 8.5v11"/><path d="M3 14h18"/><path d="M3 19h18"/></svg></span>Wooden</button>
+                <button class="room-chip" id="chip-bed-fabric" onclick="switchModel('bed_fabric')"><span class="room-chip-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v12"/><path d="M3 13h16a2 2 0 0 1 2 2v4"/><path d="M3 17h18"/><path d="M7 13v-3h5a3 3 0 0 1 3 3"/></svg></span>Fabric</button>
+              </div>
+            </div>
+          </div><!-- /bedroom content -->
         <div id="panel-room">
 
           <!-- Curtain configurator — shared across living room + bedroom, shown whenever

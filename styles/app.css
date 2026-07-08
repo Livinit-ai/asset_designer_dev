@@ -114,19 +114,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font-b);font-size:
 .viewport-area.drag-over #viewer{outline:2px solid var(--accent);outline-offset:-2px}
 /* ── Glass overlay utility ─────────────────────────────────────────────── */
 .glass-pill{background:rgb(var(--md-surface) / .70);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgb(var(--md-outline-variant) / .60);border-radius:var(--r-full);box-shadow:var(--elev-2)}
-/* ── Floating room-controls tray (canvas overlay, room mode only) ──────── */
-#room-tray{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:20;display:none;flex-direction:column;gap:10px;padding:12px 14px;width:min(600px,calc(100% - 32px));
-  background:rgb(var(--md-surface) / .82);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
-  border:1px solid rgb(var(--md-outline-variant) / .70);border-radius:var(--r-lg);box-shadow:var(--elev-3)}
-#room-tray.on{display:flex}
-#room-tray .room-sec-strip{align-self:center;min-width:240px}
-#room-tray .room-section-block{border:0;padding:0;margin:0;background:transparent}
-#room-tray .room-section-block+.room-section-block{margin-top:8px}
-#room-tray .room-section-label{margin:0 0 6px;opacity:.7}
-#room-tray .room-chips-grid{display:flex;flex-wrap:wrap;gap:6px}
-#room-tray .room-chip{flex-direction:row;min-height:0;padding:6px 12px;gap:6px;border-radius:var(--r-full);font-size:var(--fs-xs)}
+/* Floating room-controls tray removed — room controls now live in the Room panel tab (Task 3). */
 
-/* ── Config Panel (right) ──────────────────────────────────────────────── */
+/* ── Config Panel ──────────────────────────────────────────────────────── */
 .config-panel{order:-1;width:380px;background:rgb(var(--md-surface));border-right:1px solid rgb(var(--md-outline-variant));display:flex;flex-direction:column;min-height:0;overflow:hidden;flex-shrink:0}
 
 /* ── Tool-panel tabs + pinned Applied card ─────────────────────────────── */

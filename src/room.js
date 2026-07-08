@@ -16,10 +16,8 @@ function toggleRoomView() {
   if(zoneOverlay) zoneOverlay.style.display = appStore.getState().roomMode ? 'none' : '';
 
   // Tool-panel tabs own body visibility: room mode → Room tab, product → Fabrics.
+  // (Room controls now live inside the Room tab — the floating canvas tray is gone.)
   if(window.showPanelTab) showPanelTab(appStore.getState().roomMode ? 'room' : 'fabrics');
-  // Room controls still live in a floating glass tray over the canvas (Task 3 moves them into the Room tab).
-  const _roomTray = document.getElementById('room-tray');
-  if(_roomTray) _roomTray.classList.toggle('on', appStore.getState().roomMode);
 
   if(appStore.getState().roomMode) {
     // Save snapshot of current model's fabric state before entering room
