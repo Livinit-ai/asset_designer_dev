@@ -17,6 +17,16 @@ import '../features/tour/tour.js';      // self-wires window._tour*
 Object.assign(window, configurator, library, room, render, finder,
   { showPanelTab, toggleSidebar });
 
+// Non-function globals that inline onclick= handlers reference in GLOBAL scope
+// (module bindings are invisible to inline handlers, so they must be shimmed):
+//   - appStore: nav-rail Product/Room items call appStore.getState().roomMode
+//   - sph:      the zoom-in control mutates sph.r
+// appStore is a stable singleton (direct assign). E.sph is REASSIGNED across
+// room/render/model, so alias it via a live getter — a one-time `window.sph =
+// E.sph` would go stale after the first rebind and silently break zoom.
+window.appStore = appStore;
+Object.defineProperty(window, 'sph', { get: () => E.sph, configurable: true });
+
 document.addEventListener('keydown', e => {
   if (e.key==='Escape') window.closeFabricFinder();
 });
