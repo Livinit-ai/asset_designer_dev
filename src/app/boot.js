@@ -94,14 +94,19 @@ window.loadScripts([
 // Narrow-window sidebar drawer toggle (floating "Fabrics" pill; no-op >=1024px)
 function toggleSidebar(){ document.getElementById('right-panel')?.classList.toggle('open'); }
 
-// Tool-panel tabs (Fabrics / Room / Parts). Single source of truth for which
-// panel body is visible; room-mode calls showPanelTab('room') via room.js.
-let activePanelTab = 'fabrics';
+// Guided single flow: the panel shows either the DESIGN bodies (product+part and
+// fabric, stacked and ordered via CSS) or the ROOM staging body. room.js calls
+// showPanelTab('room') on entering room mode and showPanelTab('fabrics') on exit;
+// 'fabrics'/'parts'/anything-not-'room' all mean "show the design flow".
+let activePanelTab = 'design';
 function showPanelTab(name){
-  activePanelTab = name;
-  document.querySelectorAll('.panel-tab-body').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
-  ['fabrics','room','parts'].forEach(n => document.getElementById('ptab-'+n)?.classList.toggle('active', n === name));
-  // The pinned Applied card is fabric-editing context — hide it on the Room tab.
-  document.getElementById('applied-card')?.classList.toggle('hidden', name === 'room');
+  const roomMode = name === 'room';
+  activePanelTab = roomMode ? 'room' : 'design';
+  document.querySelectorAll('.panel-tab-body').forEach(b => {
+    const t = b.dataset.tab;
+    b.classList.toggle('on', roomMode ? t === 'room' : (t === 'parts' || t === 'fabrics'));
+  });
+  // The pinned Applied card is fabric-editing context — hide it in room staging.
+  document.getElementById('applied-card')?.classList.toggle('hidden', roomMode);
 }
 window.showPanelTab = showPanelTab;

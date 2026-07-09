@@ -598,6 +598,18 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:13px;height:13px;b
   .sidebar-toggle{position:fixed;right:16px;bottom:16px;z-index:31;display:inline-flex;align-items:center;gap:7px;height:44px;padding:0 18px;border:none;cursor:pointer;font:600 14px/1 var(--font-sans);color:rgb(var(--md-on-surface))}
 }
 
+/* ── Guided design flow (Product → Part → Fabric, tabs removed) ──────────────
+   Both design bodies show together, ordered; room body shows only in room mode. */
+.panel-scroll{display:flex;flex-direction:column}
+.panel-tab-body[data-tab="parts"]{order:1}     /* ① Product + ② Part */
+.panel-tab-body[data-tab="fabrics"]{order:2}    /* ③ Fabric */
+.panel-tab-body[data-tab="room"]{order:0}
+.flow-step{display:flex;align-items:center;gap:9px;padding:6px 0 3px;font:var(--type-eyebrow);letter-spacing:var(--tracking-eyebrow);text-transform:uppercase;color:rgb(var(--md-on-surface))}
+#panel-product>.flow-step{padding-left:0;padding-right:0}
+.panel-tab-body[data-tab="fabrics"]>.flow-step{padding:14px 16px 4px}
+.flow-step-n{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;flex-shrink:0;border-radius:var(--r-full);background:rgb(var(--md-primary));color:rgb(var(--md-on-primary));font:800 11px/1 var(--font-sans);letter-spacing:0}
+.flow-step-hint{margin-left:auto;font:500 11px/16px var(--font-sans);letter-spacing:normal;text-transform:none;color:rgb(var(--md-on-surface-variant))}
+
 /* ── Mobile robustness (fixes clipped CTAs, cramped canvas, mouse-only hints) ─
    Safe-area aware; the config panel already becomes a slide-over ≤1024px. */
 .canvas-cta{top:max(16px, env(safe-area-inset-top, 0px) + 8px)}

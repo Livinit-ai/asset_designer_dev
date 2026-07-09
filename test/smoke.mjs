@@ -138,17 +138,17 @@ try {
     skip('swatch apply', 'requires loaded model');
   }
 
-  // Room view round-trip. Observable: the Room panel tab activates then deactivates.
-  const roomTabActive = () => document.getElementById('ptab-room')?.classList.contains('active');
+  // Room view round-trip. Observable: appStore.roomMode flips (the tab bar was
+  // removed in the guided-flow redesign; room mode is the store's source of truth).
   if (modelLoaded) {
     let roomOk = false;
     try {
       await page.evaluate(() => window.toggleRoomView());
-      await page.waitForFunction(roomTabActive, { timeout: 45000, polling: 500 });
+      await page.waitForFunction(() => window.appStore?.getState().roomMode === true, { timeout: 45000, polling: 500 });
       await sleep(2000);
       await page.evaluate(() => window.toggleRoomView());
       await page.waitForFunction(
-        () => !document.getElementById('ptab-room')?.classList.contains('active'),
+        () => window.appStore?.getState().roomMode === false,
         { timeout: 30000, polling: 500 }
       );
       roomOk = true;
