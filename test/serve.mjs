@@ -7,8 +7,8 @@ import { createHash } from 'node:crypto';
 import { extname, join, normalize } from 'node:path';
 
 const PORT = Number(process.argv[2]) || 8123;
-const ROOT = new URL('..', import.meta.url).pathname;
-const UPSTREAM = 'https://asset-designer-dev.vercel.app';
+const ROOT = decodeURIComponent(new URL('..', import.meta.url).pathname);
+const UPSTREAM = 'https://assets-inky-xi.vercel.app';
 // The Vercel s3proxy function just streams this public bucket (api/s3proxy.ts
 // prepends 'fabric_assets/'). Falling back to it directly keeps asset-dependent
 // tests running when the Vercel deployment is paused (402).
